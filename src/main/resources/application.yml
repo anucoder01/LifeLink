@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: LifeLink
+  
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/lifelink_db}
+    username: ${SPRING_DATASOURCE_USERNAME:lifelink}
+    password: ${SPRING_DATASOURCE_PASSWORD:lifelink}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          lob:
+            non_contextual_creation: true
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+jwt:
+  secret: ${JWT_SECRET:my_super_secret_jwt_key_that_must_be_at_least_32_bytes_long}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+firebase:
+  config:
+    path: ${FIREBASE_CONFIG_PATH:classpath:firebase-service-account.json}
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: INFO
+    com.lifelink: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
