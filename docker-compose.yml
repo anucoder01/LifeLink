@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgis/postgis:15-3.4
+    container_name: lifelink_postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-lifelink}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-lifelink}
+      POSTGRES_DB: ${DB_NAME:-lifelink_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: lifelink_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  app:
+    build: .
+    container_name: lifelink_app
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${DB_NAME:-lifelink_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER:-lifelink}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-lifelink}
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-3600000}
+      - FIREBASE_CONFIG_PATH=${FIREBASE_CONFIG_PATH}
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
