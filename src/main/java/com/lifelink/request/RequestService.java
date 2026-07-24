@@ -1,8 +1,11 @@
 package com.lifelink.request;
 
+import com.lifelink.bloodchain.BloodChainService;
 import com.lifelink.donor.Donor;
+import com.lifelink.donor.DonorRepository;
 import com.lifelink.matching.MatchingEngine;
 import com.lifelink.notification.FcmService;
+import com.lifelink.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,8 +23,11 @@ public class RequestService {
 
     private final RequestRepository requestRepository;
     private final RequestResponseRepository requestResponseRepository;
+    private final DonorRepository donorRepository;
+    private final UserRepository userRepository;
     private final MatchingEngine matchingEngine;
     private final FcmService fcmService;
+    private final BloodChainService bloodChainService;
 
     @Transactional
     public EmergencyRequest createRequest(EmergencyRequest request) {
@@ -68,9 +74,81 @@ public class RequestService {
         requestRepository.save(request);
     }
 
+    /**
+     * Handles a donor's explicit ACCEPT or DECLINE response to a blood request notification.
+     *
+     * - ACCEPTED: marks the response, promotes request to IN_PROGRESS on first acceptance.
+     * - DECLINED:  marks the response with a timestamp. Donor is excluded from future broadcasts for this request.
+     *
+     * @param requestId the request being responded to
+     * @param donorPhone the authenticated donor's phone number
+     * @param newStatus  must be ACCEPTED or DECLINED
+     */
+    @Transactional
+    public void respondToRequest(UUID requestId, String donorPhone, RequestResponseStatus newStatus) {
+        if (newStatus != RequestResponseStatus.ACCEPTED && newStatus != RequestResponseStatus.DECLINED) {
+            throw new IllegalArgumentException("Donors may only respond with ACCEPTED or DECLINED");
+        }
+
+        EmergencyRequest request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Request not found: " + requestId));
+
+        if (request.getStatus() == RequestStatus.FULFILLED
+                || request.getStatus() == RequestStatus.CANCELLED
+                || request.getStatus() == RequestStatus.EXPIRED) {
+            throw new IllegalStateException("Cannot respond to a request in state: " + request.getStatus());
+        }
+
+        Donor donor = donorRepository.findByUserId(
+                        userRepository.findByPhone(donorPhone)
+                                .orElseThrow(() -> new IllegalArgumentException("User not found")).getId())
+                .orElseThrow(() -> new IllegalArgumentException("Donor profile not found"));
+
+        RequestResponse response = requestResponseRepository
+                .findByRequestIdAndDonorId(requestId, donor.getId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Donor was not notified about this request — cannot respond"));
+
+        if (response.getStatus() == RequestResponseStatus.ACCEPTED
+                || response.getStatus() == RequestResponseStatus.DECLINED) {
+            throw new IllegalStateException("Donor has already responded to this request");
+        }
+
+        response.setStatus(newStatus);
+        response.setRespondedAt(LocalDateTime.now());
+        requestResponseRepository.save(response);
+
+        if (newStatus == RequestResponseStatus.ACCEPTED
+                && request.getStatus() == RequestStatus.PENDING) {
+            request.setStatus(RequestStatus.IN_PROGRESS);
+            requestRepository.save(request);
+            log.info("Request {} moved to IN_PROGRESS after donor {} accepted", requestId, donor.getId());
+        }
+    }
+
+    /**
+     * Returns a single emergency request by ID, for use in controllers.
+     */
+    @Transactional(readOnly = true)
+    public EmergencyRequest getById(UUID requestId) {
+        return requestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Request not found: " + requestId));
+    }
+
     private void broadcastToDonors(EmergencyRequest request) {
         List<Donor> eligibleDonors = matchingEngine.findEligibleDonors(request, request.getCurrentRadiusKm());
-        
+
+        if (eligibleDonors.isEmpty() && request.getCurrentRadiusKm() >= 30) {
+            // ----------------------------------------------------------------
+            // BLOOD CHAIN ACTIVATION: No eligible donors found within 30km.
+            // Trigger SMS invites to trusted contacts of all active donors.
+            // ----------------------------------------------------------------
+            log.warn("No donors found at 30km radius for request {}. Activating Blood Chain.",
+                    request.getId());
+            bloodChainService.activateBloodChain(request);
+            return;
+        }
+
         for (Donor donor : eligibleDonors) {
             // Check if already notified
             if (requestResponseRepository.findByRequestIdAndDonorId(request.getId(), donor.getId()).isEmpty()) {
@@ -80,7 +158,7 @@ public class RequestService {
                 response.setStatus(RequestResponseStatus.NOTIFIED);
                 requestResponseRepository.save(response);
 
-                fcmService.sendNotification(donor.getFcmToken(), "Emergency Blood Request", 
+                fcmService.sendNotification(donor.getFcmToken(), "Emergency Blood Request",
                         "Blood type " + request.getBloodType() + " is needed urgently.",
                         request.getUrgency() == Urgency.CRITICAL);
             }
