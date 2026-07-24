@@ -1,62 +1,72 @@
 package com.lifelink.donor;
 
 import com.lifelink.donor.dto.DonorDto;
+import com.lifelink.donor.dto.FcmTokenDto;
 import com.lifelink.donor.dto.LocationDto;
-import com.lifelink.user.User;
-import com.lifelink.user.UserRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Donor", description = "Donor profile and availability management")
 @RestController
 @RequestMapping("/api/v1/donors")
 @RequiredArgsConstructor
 public class DonorController {
 
-    private final DonorRepository donorRepository;
-    private final UserRepository userRepository;
-    private final GeometryFactory geometryFactory = new GeometryFactory();
+    private final DonorService donorService;
 
+    /**
+     * GET /api/v1/donors/me
+     * Returns the authenticated donor's profile.
+     */
+    @Operation(summary = "Get my donor profile")
     @GetMapping("/me")
     public ResponseEntity<DonorDto> getMe(Authentication authentication) {
-        User user = userRepository.findByPhone(authentication.getName())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        Donor donor = donorRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Donor not found"));
-
-        return ResponseEntity.ok(mapToDto(donor, user));
+        return ResponseEntity.ok(donorService.getMyProfile(authentication.getName()));
     }
 
+    /**
+     * PUT /api/v1/donors/me/location
+     * Updates the authenticated donor's current GPS location.
+     * Should be called periodically by the mobile client.
+     */
+    @Operation(summary = "Update my GPS location")
     @PutMapping("/me/location")
-    public ResponseEntity<DonorDto> updateLocation(Authentication authentication, @RequestBody LocationDto locationDto) {
-        User user = userRepository.findByPhone(authentication.getName())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        Donor donor = donorRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Donor not found"));
-
-        Point location = geometryFactory.createPoint(new Coordinate(locationDto.getLongitude(), locationDto.getLatitude()));
-        location.setSRID(4326);
-        donor.setLocation(location);
-        donor = donorRepository.save(donor);
-
-        return ResponseEntity.ok(mapToDto(donor, user));
+    public ResponseEntity<DonorDto> updateLocation(
+            Authentication authentication,
+            @Valid @RequestBody LocationDto locationDto) {
+        return ResponseEntity.ok(donorService.updateLocation(authentication.getName(), locationDto));
     }
 
-    private DonorDto mapToDto(Donor donor, User user) {
-        DonorDto dto = new DonorDto();
-        dto.setId(donor.getId().toString());
-        dto.setName(user.getName());
-        dto.setBloodType(donor.getBloodType());
-        if (donor.getLocation() != null) {
-            dto.setLatitude(donor.getLocation().getY());
-            dto.setLongitude(donor.getLocation().getX());
-        }
-        dto.setLastDonationDate(donor.getLastDonationDate());
-        dto.setIsActive(donor.getIsActive());
-        return dto;
+    /**
+     * PUT /api/v1/donors/me/fcm-token
+     * Registers or refreshes the FCM push notification token.
+     * Must be called after login and whenever Firebase issues a new token.
+     */
+    @Operation(summary = "Register or refresh FCM push notification token")
+    @PutMapping("/me/fcm-token")
+    public ResponseEntity<Void> updateFcmToken(
+            Authentication authentication,
+            @Valid @RequestBody FcmTokenDto fcmTokenDto) {
+        donorService.updateFcmToken(authentication.getName(), fcmTokenDto);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * PUT /api/v1/donors/me/active?active=true|false
+     * Toggles the donor's availability. Inactive donors are excluded from
+     * all matching queries and receive no emergency notifications.
+     */
+    @Operation(summary = "Toggle donor availability (active/inactive)")
+    @PutMapping("/me/active")
+    public ResponseEntity<DonorDto> setActiveStatus(
+            Authentication authentication,
+            @RequestParam boolean active) {
+        return ResponseEntity.ok(donorService.setActiveStatus(authentication.getName(), active));
     }
 }
+
