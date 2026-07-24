@@ -1,43 +1,186 @@
-# LifeLink: Blood Donor & Emergency Request Network
+# LifeLink 🩸 — Blood Donor & Emergency Request Network
 
-LifeLink is a real-time, geo-targeted web application for connecting blood donors with emergency requests. It replaces manual chat forwarding with a reliable matching system using PostGIS and Firebase Cloud Messaging (FCM).
+> **Real-time, geo-targeted blood donor matching with social impact features designed to save lives where conventional systems fail.**
 
-## Tech Stack
-- **Backend**: Java 21, Spring Boot 3.3.x
-- **Database**: PostgreSQL 15+ with PostGIS
-- **Caching**: Redis 7.x
-- **Auth**: JWT (JSON Web Tokens)
-- **Push Notifications**: Firebase Cloud Messaging (FCM)
-- **Containerization**: Docker Compose
+LifeLink replaces manual WhatsApp-group blood requests with a reliable, privacy-first matching system powered by PostGIS geo-queries, Firebase push notifications, and a unique **Blood Chain** social vouching network.
 
-## Quick Start
+---
+
+## ✨ Features
+
+### Core Platform
+- 🔐 **JWT Authentication** — secure stateless auth with role-based access (`DONOR`, `REQUESTER`, `HOSPITAL_ADMIN`)
+- 📍 **Geo-targeted Matching** — PostGIS `ST_DWithin` finds eligible donors within radius; auto-expands 5km → 15km → 30km if unanswered
+- 🩸 **Blood Type Compatibility Matrix** — full ABO/Rh compatibility rules enforced at matching time
+- ⏱️ **Donation Eligibility Cooldowns** — Whole Blood (90d), Platelets (14d), Plasma (28d)
+- 🔔 **Firebase Push Notifications (FCM)** — instant alerts to matched donors with priority flag for CRITICAL urgency
+- 📵 **Donor Respond Flow** — donors explicitly ACCEPT or DECLINE; request promoted to IN_PROGRESS on first acceptance
+- 📵 **Active Status Toggle** — donors can mark themselves unavailable; excluded from all matching
+- ⏰ **Scheduled Jobs** — auto radius-expansion every 5 min, auto-expiry check every 60s
+- 🏥 **Hospital & Blood Inventory** — data model for hospital blood stock tracking
+
+### Feature A — Blood Chain 🔗 *(Social Vouching Network)*
+> *When no registered donors are found within 30km, the Blood Chain activates.*
+
+Each donor nominates up to **3 trusted contacts** as backup donors. When the matching engine exhausts the 30km radius with zero eligible donors:
+
+1. The system generates a unique **72-hour one-time invite link** per contact
+2. An **SMS** is sent to each vouched contact: *"Your friend said you'd help. O+ blood is needed nearby. Register here: [link]"*
+3. The contact taps the link → registration form pre-fills their name & phone → they register as a donor in ~2 minutes
+4. The token is consumed on use; expired tokens are cleaned up daily
+
+**Privacy guarantees:** Contact data is held only until they opt in. Phone numbers are masked in all API responses. Donors can remove contacts at any time.
+
+**SMS:** Powered by a Twilio-compatible stub (logs in dev mode). Set `TWILIO_ENABLED=true` to send real SMS.
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Backend** | Java 21, Spring Boot 3.3.x |
+| **Database** | PostgreSQL 15+ with PostGIS extension |
+| **Spatial Queries** | Hibernate Spatial + PostGIS `ST_DWithin` |
+| **Caching** | Redis 7.x |
+| **Auth** | JWT (jjwt 0.12.3) |
+| **Push Notifications** | Firebase Cloud Messaging (FCM) via Firebase Admin SDK |
+| **SMS** | Twilio (stub included, activate with env vars) |
+| **Migrations** | Flyway |
+| **API Docs** | OpenAPI 3 / Swagger UI |
+| **Containerization** | Docker Compose |
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Java 21 ([Eclipse Temurin](https://adoptium.net/temurin/releases/?version=21))
+- Docker & Docker Compose
 
 ### 1. Configure Environment Variables
-Rename the `.env.example` file to `.env` or just export the variables manually:
 ```bash
 cp .env.example .env
 ```
-Provide the correct database credentials, JWT secret, and path to your Firebase service account JSON.
+Edit `.env` with your database credentials, JWT secret, Firebase config path, and (optionally) Twilio credentials.
 
 ### 2. Start Infrastructure
-Start the Postgres (with PostGIS) and Redis containers:
 ```bash
 docker-compose up -d postgres redis
 ```
-(You can also start the `app` container directly via docker-compose if you configure the Dockerfile, but for local development, it's easier to run Maven).
 
 ### 3. Run the Application
-Make sure you have Java 21 installed.
 ```bash
 ./mvnw spring-boot:run
 ```
-Flyway migrations will automatically run and seed the database.
+Flyway migrations run automatically and seed the database with sample data.
 
-## API Documentation
-The API documentation is generated automatically using OpenAPI/Swagger. Once the application is running, navigate to:
-[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+### 4. Explore the API
+Open Swagger UI: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 
-## Architecture Overview
-- **Eligibility**: Donors are automatically filtered out if they have donated recently based on component type rules (90 days for whole blood, 14 for platelets, 28 for plasma).
-- **Matching Engine**: Uses PostGIS `ST_DWithin` to find donors within a specific radius (defaults to 5km). Automatically expands to 15km and 30km if a request goes unanswered.
-- **Anonymity**: Donor contact information is heavily guarded and only revealed when a donor explicitly accepts an emergency request.
+---
+
+## 📡 Key API Endpoints
+
+### Auth
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/v1/auth/login` | Login, returns JWT |
+| `POST` | `/api/v1/auth/register` | Register a new user |
+| `POST` | `/api/v1/auth/register/invited?token=` | Register via Blood Chain invite link |
+
+### Donor
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/v1/donors/me` | Get my donor profile |
+| `PUT` | `/api/v1/donors/me/location` | Update GPS location |
+| `PUT` | `/api/v1/donors/me/fcm-token` | Register/refresh FCM push token |
+| `PUT` | `/api/v1/donors/me/active?active=` | Toggle availability |
+
+### Emergency Requests
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/v1/requests` | Create emergency blood request |
+| `POST` | `/api/v1/requests/{id}/respond` | ACCEPT or DECLINE a request |
+| `PUT` | `/api/v1/requests/{id}/fulfill` | Mark request as fulfilled |
+| `PUT` | `/api/v1/requests/{id}/cancel` | Cancel a request |
+| `GET` | `/api/v1/requests/{id}` | Get request details |
+
+### Blood Chain
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/v1/donors/me/vouches` | 🔒 | List trusted backup contacts |
+| `POST` | `/api/v1/donors/me/vouches` | 🔒 | Add a trusted contact (max 3) |
+| `DELETE` | `/api/v1/donors/me/vouches/{id}` | 🔒 | Remove a trusted contact |
+| `GET` | `/api/v1/blood-chain/invite/{token}` | 🌐 | Validate invite link (public) |
+
+---
+
+## 🏗 Architecture Overview
+
+```
+Emergency Request Created
+        │
+        ▼
+  Matching Engine (PostGIS ST_DWithin)
+  ┌─────────────────────────────────┐
+  │  Radius: 5km → 15km → 30km     │
+  │  Blood type compatibility check │
+  │  Donation eligibility check     │
+  └─────────────────────────────────┘
+        │
+        ├─ Donors found → FCM push notification
+        │
+        └─ No donors at 30km → BLOOD CHAIN ACTIVATES
+                │
+                ▼
+         SMS to vouched contacts
+         (one-time 72hr invite link)
+                │
+                ▼
+         Contact registers → joins donor pool
+```
+
+### Key Design Decisions
+- **Anonymity first**: Donor contact info is never exposed until they explicitly ACCEPT a request
+- **Dual notification**: FCM for registered donors, SMS fallback for Blood Chain contacts
+- **Privacy-preserving SMS**: Contact phone numbers are masked in all API responses
+- **Scheduled expansion**: Radius expands every 5 min; Blood Chain only triggers at max radius with zero results
+
+---
+
+## 🗺 Roadmap
+
+See [ROADMAP.md](./ROADMAP.md) for the full feature roadmap including:
+- **Feature B** — Volunteer Driver Network
+- **Feature C** — Lifetime Impact Dashboard
+- **Feature D** — SMS/WhatsApp Fallback for all donors
+- **Feature E** — Predictive Blood Shortage Alerts
+- **Feature F** — Post-Donation Health Companion
+- **Feature G** — Community Camp Organizer Portal
+- **Feature H** — Rare Blood Type Global Registry
+- **Feature I** — Family Blood Pact Groups
+- **Feature J** — Anonymized Public Health Reports
+
+---
+
+## 🔒 Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `SPRING_DATASOURCE_URL` | ✅ | PostgreSQL JDBC URL |
+| `SPRING_DATASOURCE_USERNAME` | ✅ | DB username |
+| `SPRING_DATASOURCE_PASSWORD` | ✅ | DB password |
+| `JWT_SECRET` | ✅ | HS256 secret (min 32 bytes) |
+| `JWT_EXPIRATION` | ❌ | Token TTL in ms (default: 86400000) |
+| `FIREBASE_CONFIG_PATH` | ✅ | Path to Firebase service account JSON |
+| `APP_BASE_URL` | ❌ | Public URL for invite links (default: localhost:8080) |
+| `TWILIO_ENABLED` | ❌ | Set `true` to send real SMS (default: false) |
+| `TWILIO_SID` | ⚠️ | Twilio Account SID (required if enabled) |
+| `TWILIO_AUTH_TOKEN` | ⚠️ | Twilio Auth Token (required if enabled) |
+| `TWILIO_FROM_NUMBER` | ⚠️ | Twilio sender number in E.164 format |
+
+---
+
+## 📄 License
+MIT
