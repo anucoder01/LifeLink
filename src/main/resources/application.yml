@@ -46,3 +46,16 @@ logging:
     com.lifelink: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# Public base URL used in invite SMS links
+app:
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+
+# Twilio SMS configuration
+# Set twilio.enabled=true and supply env vars to activate real SMS sending.
+# Default stub mode: messages are logged, not sent.
+twilio:
+  enabled: ${TWILIO_ENABLED:false}
+  account-sid: ${TWILIO_SID:}
+  auth-token: ${TWILIO_AUTH_TOKEN:}
+  from-number: ${TWILIO_FROM_NUMBER:+10000000000}
