@@ -21,10 +21,10 @@
 | 2 | **Donor Service layer** — business logic between controller and repo | `[ ]` | `DonorController` calls repo directly; needs a `DonorService` |
 | 3 | **FCM token registration endpoint** — `PUT /api/donors/fcm-token` | `[ ]` | Donors must be able to register/update their FCM token post-login |
 | 4 | **Donor ACCEPT / DECLINE endpoint** — `POST /api/requests/{id}/respond` | `[ ]` | Donors respond to a notification; updates `RequestResponseStatus` |
-| 5 | **Hospital Service + Controller** — full CRUD and geo-query | `[ ]` | Entities exist, no service/controller |
-| 6 | **Blood Inventory Service + Controller** — stock CRUD and availability query | `[ ]` | Entities exist, no service/controller |
-| 7 | **User profile endpoints** — `GET /api/users/me`, `PUT /api/users/me` | `[ ]` | User entity exists, no management API |
-| 8 | **Redis caching** — cache donor geo-queries and blood type lookups | `[ ]` | Redis is configured, `@Cacheable` is unused |
+| 5 | **Hospital Service + Controller** — full CRUD and geo-query | `[x]` | Full CRUD + `/nearby` + `/nearby/blood` geo-search endpoints |
+| 6 | **Blood Inventory Service + Controller** — stock CRUD and availability query | `[x]` | Upsert semantics, per-hospital + system-wide availability query |
+| 7 | **User profile endpoints** — `GET /api/users/me`, `PUT /api/users/me` | `[x]` | + `PUT /api/users/me/password`; patch semantics; email uniqueness check |
+| 8 | **Redis caching** — cache donor geo-queries and blood type lookups | `[x]` | `@Cacheable` on hospital geo-queries + compatibility lookups; `@CacheEvict` on all writes |
 | 9 | **Pagination** — all list endpoints must support `Pageable` | `[ ]` | Prevent OOM on large data sets |
 | 10 | **Request status webhook / polling** — notify requester of donor state changes | `[ ]` | EN_ROUTE, DONATED status changes must reach the requester |
 | 11 | **Test suite expansion** — `MatchingEngine`, `RequestService`, auth flow | `[/]` | `EligibilityUtilTest` exists; need more coverage |
@@ -218,3 +218,24 @@ Auto-generated weekly anonymized aggregate reports: regional demand heatmaps, av
 - DB migration `V3__blood_chain.sql` — `donor_vouches` + `blood_chain_invite_tokens` tables
 - JDK 21 installed via winget (was JDK 17). Set JAVA_HOME for compile.
 - **Next session start:** Feature #5 — Hospital Service + Controller
+
+### Session 3 — 2026-07-25
+- Implemented Feature #5: Hospital Service + Controller
+- Implemented Feature #6: Blood Inventory Service + Controller
+- New files: `HospitalRepository`, `BloodInventoryRepository`, `HospitalService`, `BloodInventoryService`, `HospitalController`, `BloodInventoryController`
+- New DTOs: `HospitalDto`, `CreateHospitalDto`, `NearbyHospitalDto`, `InventoryDto`, `UpdateInventoryDto`
+- Updated `Hospital` entity: added `address`, `contactPhone`, `createdAt`, cascade `@OneToMany` to inventory
+- DB migration `V4__hospital_inventory_indexes.sql` — new columns + GIST/lookup indexes
+- JAVA_HOME must be set to `C:\Users\anuvu\.jdks\jdk-21.0.11+10` before running mvnw
+- BUILD SUCCESS confirmed
+- Implemented Feature #7: User profile endpoints
+- New files: `UserService`, `UserController`, DTOs: `UserProfileDto`, `UpdateProfileDto`, `ChangePasswordDto`
+- Upgraded `GlobalExceptionHandler`: added 404 (EntityNotFoundException), 400 (MethodArgumentNotValidException with field detail), 409 (DataIntegrityViolationException)
+- Implemented Feature #8: Redis caching
+- New files: `RedisConfig` (JSON serializer, per-cache TTLs), `CacheNames` (constants)
+- `@Cacheable` added to: `HospitalService.getAll()`, `findNearby()`, `findNearbyWithBlood()`, `CompatibilityMatrix.getCompatibleDonors()` (24h TTL)
+- `@CacheEvict` added to all hospital + inventory write methods
+- `CompatibilityMatrix` converted from static utility to Spring `@Component` so AOP proxy works
+- `MatchingEngine` updated to inject `CompatibilityMatrix` bean
+- `spring.cache.type=redis` added to `application.yml`
+- **Next session start:** Phase 1 Feature #9 — Pagination (Pageable on all list endpoints)
