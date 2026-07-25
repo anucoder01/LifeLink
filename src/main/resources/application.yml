@@ -27,6 +27,9 @@ spring:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
       port: ${SPRING_DATA_REDIS_PORT:6379}
 
+  cache:
+    type: redis
+
   flyway:
     enabled: true
     baseline-on-migrate: true
