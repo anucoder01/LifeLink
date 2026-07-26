@@ -12,6 +12,6 @@ import java.util.UUID;
 public interface DonorRepository extends JpaRepository<Donor, UUID> {
     Optional<Donor> findByUserId(UUID userId);
 
-    @Query("SELECT d FROM Donor d WHERE d.isActive = true AND d.bloodType IN :compatibleBloodTypes AND ST_DWithin(d.location, :location, :radiusMeters) = true")
+    @Query(value = "SELECT d.* FROM donors d WHERE d.is_active = true AND d.blood_type IN :compatibleBloodTypes AND ST_DWithin(d.location, :location, :radiusMeters)", nativeQuery = true)
     List<Donor> findEligibleDonorsWithinRadius(@Param("location") Point location, @Param("radiusMeters") double radiusMeters, @Param("compatibleBloodTypes") List<String> compatibleBloodTypes);
 }

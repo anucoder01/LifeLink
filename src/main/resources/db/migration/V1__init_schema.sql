@@ -16,7 +16,7 @@ CREATE TABLE donors (
     blood_type VARCHAR(5) NOT NULL,
     location GEOGRAPHY(Point, 4326) NOT NULL,
     last_donation_date DATE,
-    reliability_score DECIMAL(4,2) DEFAULT 100.00,
+    reliability_score DECIMAL(5,2) DEFAULT 100.00,
     is_active BOOLEAN DEFAULT TRUE,
     fcm_token TEXT
 );

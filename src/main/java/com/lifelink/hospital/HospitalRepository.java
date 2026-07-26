@@ -14,11 +14,7 @@ public interface HospitalRepository extends JpaRepository<Hospital, UUID> {
      * Returns all verified hospitals whose centroid is within {@code radiusMeters}
      * of the given point, ordered nearest-first.
      */
-    @Query("""
-            SELECT h FROM Hospital h
-            WHERE ST_DWithin(h.location, :origin, :radiusMeters) = true
-            ORDER BY ST_Distance(h.location, :origin) ASC
-            """)
+    @Query(value = "SELECT h.* FROM hospitals h WHERE ST_DWithin(h.location, :origin, :radiusMeters) ORDER BY ST_Distance(h.location, :origin) ASC", nativeQuery = true)
     List<Hospital> findWithinRadius(
             @Param("origin") Point origin,
             @Param("radiusMeters") double radiusMeters);
@@ -27,16 +23,14 @@ public interface HospitalRepository extends JpaRepository<Hospital, UUID> {
      * Returns all verified hospitals whose centroid is within {@code radiusMeters}
      * and that have at least 1 unit of the requested blood type + component.
      */
-    @Query("""
-            SELECT DISTINCT h FROM Hospital h
-            JOIN BloodInventory bi ON bi.hospital = h
-            WHERE ST_DWithin(h.location, :origin, :radiusMeters) = true
-              AND h.verified = true
-              AND bi.bloodType = :bloodType
-              AND bi.componentType = :componentType
-              AND bi.unitsAvailable > 0
-            ORDER BY ST_Distance(h.location, :origin) ASC
-            """)
+    @Query(value = "SELECT DISTINCT h.* FROM hospitals h " +
+            "JOIN blood_inventory bi ON bi.hospital_id = h.id " +
+            "WHERE ST_DWithin(h.location, :origin, :radiusMeters) " +
+            "  AND h.verified = true " +
+            "  AND bi.blood_type = :bloodType " +
+            "  AND bi.component_type = :componentType " +
+            "  AND bi.units_available > 0 " +
+            "ORDER BY ST_Distance(h.location, :origin) ASC", nativeQuery = true)
     List<Hospital> findNearbyWithAvailableBlood(
             @Param("origin") Point origin,
             @Param("radiusMeters") double radiusMeters,

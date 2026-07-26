@@ -35,7 +35,7 @@ public class EmergencyRequest {
     @Column(nullable = false, length = 20)
     private Urgency urgency;
 
-    @Column(columnDefinition = "geometry(Point,4326)", nullable = false)
+    @Column(columnDefinition = "geography(Point,4326)", nullable = false)
     private Point location;
 
     @Enumerated(EnumType.STRING)
