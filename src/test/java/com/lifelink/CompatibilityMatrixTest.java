@@ -9,16 +9,18 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CompatibilityMatrixTest {
 
+    private final CompatibilityMatrix matrix = new CompatibilityMatrix();
+
     @Test
     void testONegativeCanOnlyReceiveFromONegative() {
-        List<String> compatible = CompatibilityMatrix.getCompatibleDonors("O-");
+        List<String> compatible = matrix.getCompatibleDonors("O-");
         assertEquals(1, compatible.size());
         assertTrue(compatible.contains("O-"));
     }
 
     @Test
     void testABPositiveCanReceiveFromAll() {
-        List<String> compatible = CompatibilityMatrix.getCompatibleDonors("AB+");
+        List<String> compatible = matrix.getCompatibleDonors("AB+");
         assertEquals(8, compatible.size());
         assertTrue(compatible.contains("O-"));
         assertTrue(compatible.contains("A+"));
@@ -28,7 +30,7 @@ class CompatibilityMatrixTest {
 
     @Test
     void testAPositive() {
-        List<String> compatible = CompatibilityMatrix.getCompatibleDonors("A+");
+        List<String> compatible = matrix.getCompatibleDonors("A+");
         assertEquals(4, compatible.size());
         assertTrue(compatible.contains("A+"));
         assertTrue(compatible.contains("A-"));

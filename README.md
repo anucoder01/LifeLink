@@ -151,16 +151,27 @@ Emergency Request Created
 
 ## 🗺 Roadmap
 
-See [ROADMAP.md](./ROADMAP.md) for the full feature roadmap including:
-- **Feature B** — Volunteer Driver Network
-- **Feature C** — Lifetime Impact Dashboard
-- **Feature D** — SMS/WhatsApp Fallback for all donors
-- **Feature E** — Predictive Blood Shortage Alerts
-- **Feature F** — Post-Donation Health Companion
-- **Feature G** — Community Camp Organizer Portal
-- **Feature H** — Rare Blood Type Global Registry
-- **Feature I** — Family Blood Pact Groups
-- **Feature J** — Anonymized Public Health Reports
+See [ROADMAP.md](./ROADMAP.md) for the full feature roadmap. 100+ features organized across 17 phases:
+
+| Phase | Focus |
+|---|---|
+| **Phase 1** | Core backend completion (pagination, webhooks, tests) |
+| **Phase 2** | Extended auth — blood bank, NGO, OTP, Google SSO, ABHA |
+| **Phase 3** | Donor health profiling, questionnaire, consent management |
+| **Phase 4** | Geo-matching extensions — ETA routing, live location, geo-fencing |
+| **Phase 5** | Emergency system — smart ranking, cascading, SOS escalation, disaster mode |
+| **Phase 6** | Smart notifications — SMS/WhatsApp fallback, silent hours, in-app center |
+| **Phase 7** | Blood Chain extensions + Driver Network + Family Pacts + Communities |
+| **Phase 8** | Gamification — impact dashboard, badges, XP, leaderboards, streaks |
+| **Phase 9** | Hospital & blood bank platform — live tracking, analytics, cross-hospital |
+| **Phase 10** | AI features — smart ranking, demand prediction, fake detection, chatbot |
+| **Phase 11** | Trust & safety — rare blood registry, reputation, audit logs, rate limiting |
+| **Phase 12** | Analytics — heatmaps, blood group stats, response times, KPIs |
+| **Phase 13** | Post-donation health companion — 7-day recovery protocol |
+| **Phase 14** | Accessibility, multilingual support, digital donor cards, certificates |
+| **Phase 15** | Community — camps, disaster mode, corporate CSR, campus ambassadors |
+| **Phase 16** | Infrastructure hardening — rate limiting, monitoring, backups, encryption |
+| **Phase 17** | Frontend — React/Flutter Web donor dashboard, hospital admin, public portal |
 
 ---
 

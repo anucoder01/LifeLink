@@ -2,6 +2,10 @@ package com.lifelink.request;
 
 import com.lifelink.request.dto.CreateRequestDto;
 import com.lifelink.request.dto.RespondToRequestDto;
+import com.lifelink.request.dto.RequestEventDto;
+import com.lifelink.request.dto.RequestResponseDto;
+import com.lifelink.common.dto.PaginatedResponse;
+import com.lifelink.common.util.PaginationUtil;
 import com.lifelink.user.User;
 import com.lifelink.user.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -100,6 +106,77 @@ public class RequestController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getRequest(@PathVariable UUID id) {
         return ResponseEntity.ok(requestService.getById(id));
+    }
+
+    @Operation(summary = "List my emergency requests (paginated)")
+    @GetMapping
+    public ResponseEntity<PaginatedResponse<EmergencyRequest>> getMyRequests(
+            Authentication authentication,
+            @org.springdoc.core.annotations.ParameterObject Pageable pageable) {
+        Page<EmergencyRequest> page = requestService.getRequestsByRequester(authentication.getName(), pageable);
+        return ResponseEntity.ok(PaginationUtil.fromPage(page));
+    }
+
+    @Operation(summary = "Get responses for an emergency request (paginated)")
+    @GetMapping("/{id}/responses")
+    public ResponseEntity<PaginatedResponse<RequestResponseDto>> getRequestResponses(
+            Authentication authentication,
+            @PathVariable UUID id,
+            @org.springdoc.core.annotations.ParameterObject Pageable pageable) {
+        Page<RequestResponseDto> page = requestService.getRequestResponses(id, authentication.getName(), pageable)
+                .map(this::convertToDto);
+        return ResponseEntity.ok(PaginationUtil.fromPage(page));
+    }
+
+    @Operation(summary = "Get event history log for an emergency request (paginated)")
+    @GetMapping("/{id}/events")
+    public ResponseEntity<PaginatedResponse<RequestEventDto>> getRequestEvents(
+            Authentication authentication,
+            @PathVariable UUID id,
+            @org.springdoc.core.annotations.ParameterObject Pageable pageable) {
+        Page<RequestEventDto> page = requestService.getRequestEvents(id, authentication.getName(), pageable)
+                .map(this::convertToDto);
+        return ResponseEntity.ok(PaginationUtil.fromPage(page));
+    }
+
+    @Operation(summary = "Update response status of donor (EN_ROUTE, DONATED, NO_SHOW)")
+    @PutMapping("/{id}/response-status")
+    public ResponseEntity<Void> updateResponseStatus(
+            Authentication authentication,
+            @PathVariable UUID id,
+            @RequestParam RequestResponseStatus status) {
+        requestService.updateResponseStatus(id, authentication.getName(), status);
+        return ResponseEntity.noContent().build();
+    }
+
+    private RequestResponseDto convertToDto(RequestResponse entity) {
+        RequestResponseDto dto = new RequestResponseDto();
+        dto.setId(entity.getId());
+        dto.setDonorId(entity.getDonor().getId());
+        
+        RequestResponseStatus status = entity.getStatus();
+        if (status == RequestResponseStatus.ACCEPTED || status == RequestResponseStatus.EN_ROUTE || status == RequestResponseStatus.DONATED) {
+            if (entity.getDonor().getUser() != null) {
+                dto.setDonorName(entity.getDonor().getUser().getName());
+                dto.setDonorPhone(entity.getDonor().getUser().getPhone());
+            }
+        } else {
+            dto.setDonorName("Anonymous Donor");
+            dto.setDonorPhone(null);
+        }
+        
+        dto.setStatus(entity.getStatus().name());
+        dto.setRespondedAt(entity.getRespondedAt());
+        return dto;
+    }
+
+    private RequestEventDto convertToDto(RequestEvent entity) {
+        RequestEventDto dto = new RequestEventDto();
+        dto.setId(entity.getId());
+        dto.setEventType(entity.getEventType());
+        dto.setMessage(entity.getMessage());
+        dto.setCreatedAt(entity.getCreatedAt());
+        return dto;
     }
 }
 

@@ -28,6 +28,8 @@ public class RequestService {
     private final MatchingEngine matchingEngine;
     private final FcmService fcmService;
     private final BloodChainService bloodChainService;
+    private final RequestEventRepository requestEventRepository;
+    private final com.lifelink.webhook.WebhookService webhookService;
 
     @Transactional
     public EmergencyRequest createRequest(EmergencyRequest request) {
@@ -37,6 +39,7 @@ public class RequestService {
             request.setExpiresAt(LocalDateTime.now().plusHours(24));
         }
         EmergencyRequest saved = requestRepository.save(request);
+        logEventAndNotify(saved, "CREATED", "Emergency request created for blood type " + request.getBloodType());
         broadcastToDonors(saved);
         return saved;
     }
@@ -52,6 +55,7 @@ public class RequestService {
 
         request.setStatus(RequestStatus.FULFILLED);
         requestRepository.save(request);
+        logEventAndNotify(request, "STATUS_CHANGED", "Emergency request status changed to FULFILLED");
 
         // Notify other donors to stand down
         List<RequestResponse> responses = requestResponseRepository.findByRequestId(requestId);
@@ -72,6 +76,7 @@ public class RequestService {
 
         request.setStatus(RequestStatus.CANCELLED);
         requestRepository.save(request);
+        logEventAndNotify(request, "STATUS_CHANGED", "Emergency request status changed to CANCELLED");
     }
 
     /**
@@ -118,10 +123,13 @@ public class RequestService {
         response.setRespondedAt(LocalDateTime.now());
         requestResponseRepository.save(response);
 
+        logResponseEventAndNotify(request, donor, newStatus, "Donor responded: " + newStatus);
+
         if (newStatus == RequestResponseStatus.ACCEPTED
                 && request.getStatus() == RequestStatus.PENDING) {
             request.setStatus(RequestStatus.IN_PROGRESS);
             requestRepository.save(request);
+            logEventAndNotify(request, "STATUS_CHANGED", "Emergency request status changed to IN_PROGRESS");
             log.info("Request {} moved to IN_PROGRESS after donor {} accepted", requestId, donor.getId());
         }
     }
@@ -176,6 +184,7 @@ public class RequestService {
                 else if (req.getCurrentRadiusKm() == 15) req.setCurrentRadiusKm(30);
                 
                 requestRepository.save(req);
+                logEventAndNotify(req, "RADIUS_EXPANDED", "Search radius expanded to " + req.getCurrentRadiusKm() + "km");
                 broadcastToDonors(req);
             }
         }
@@ -193,7 +202,130 @@ public class RequestService {
             if (req.getExpiresAt() != null && req.getExpiresAt().isBefore(now)) {
                 req.setStatus(RequestStatus.EXPIRED);
                 requestRepository.save(req);
+                logEventAndNotify(req, "STATUS_CHANGED", "Emergency request status changed to EXPIRED");
             }
+        }
+    }
+
+    @Transactional
+    public void updateResponseStatus(UUID requestId, String donorPhone, RequestResponseStatus status) {
+        if (status != RequestResponseStatus.EN_ROUTE && status != RequestResponseStatus.DONATED && status != RequestResponseStatus.NO_SHOW) {
+            throw new IllegalArgumentException("Invalid status transition for donor");
+        }
+
+        EmergencyRequest request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Request not found: " + requestId));
+
+        Donor donor = donorRepository.findByUserId(
+                        userRepository.findByPhone(donorPhone)
+                                .orElseThrow(() -> new IllegalArgumentException("User not found")).getId())
+                .orElseThrow(() -> new IllegalArgumentException("Donor profile not found"));
+
+        RequestResponse response = requestResponseRepository
+                .findByRequestIdAndDonorId(requestId, donor.getId())
+                .orElseThrow(() -> new IllegalStateException("Response not found for donor"));
+
+        if (response.getStatus() != RequestResponseStatus.ACCEPTED && response.getStatus() != RequestResponseStatus.EN_ROUTE) {
+            throw new IllegalStateException("Cannot transition response from current state: " + response.getStatus());
+        }
+
+        response.setStatus(status);
+        response.setRespondedAt(LocalDateTime.now());
+        requestResponseRepository.save(response);
+
+        logResponseEventAndNotify(request, donor, status, "Donor status updated to: " + status);
+    }
+
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<EmergencyRequest> getRequestsByRequester(String phone, org.springframework.data.domain.Pageable pageable) {
+        com.lifelink.user.User user = userRepository.findByPhone(phone)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return requestRepository.findByRequesterId(user.getId(), pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<RequestResponse> getRequestResponses(UUID requestId, String requesterPhone, org.springframework.data.domain.Pageable pageable) {
+        EmergencyRequest request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Request not found: " + requestId));
+        
+        com.lifelink.user.User user = userRepository.findByPhone(requesterPhone)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        
+        if (!request.getRequester().getId().equals(user.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Not authorized to view responses for this request");
+        }
+
+        return requestResponseRepository.findByRequestId(requestId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<RequestEvent> getRequestEvents(UUID requestId, String requesterPhone, org.springframework.data.domain.Pageable pageable) {
+        EmergencyRequest request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Request not found: " + requestId));
+
+        com.lifelink.user.User user = userRepository.findByPhone(requesterPhone)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (!request.getRequester().getId().equals(user.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Not authorized to view events for this request");
+        }
+
+        return requestEventRepository.findByRequestIdOrderByCreatedAtAsc(requestId, pageable);
+    }
+
+    private void logEventAndNotify(EmergencyRequest request, String eventType, String message) {
+        RequestEvent event = new RequestEvent();
+        event.setRequest(request);
+        event.setEventType(eventType);
+        event.setMessage(message);
+        requestEventRepository.save(event);
+
+        if (request.getRequester() != null) {
+            webhookService.dispatchEvent(
+                request.getRequester().getId(),
+                com.lifelink.webhook.dto.WebhookEventPayload.builder()
+                    .eventId(UUID.randomUUID())
+                    .eventType(eventType)
+                    .timestamp(LocalDateTime.now())
+                    .requestId(request.getId())
+                    .requestStatus(request.getStatus().name())
+                    .bloodType(request.getBloodType())
+                    .componentType(request.getComponentType().name())
+                    .urgency(request.getUrgency().name())
+                    .latitude(request.getLocation().getY())
+                    .longitude(request.getLocation().getX())
+                    .build()
+            );
+        }
+    }
+
+    private void logResponseEventAndNotify(EmergencyRequest request, Donor donor, RequestResponseStatus status, String message) {
+        RequestEvent event = new RequestEvent();
+        event.setRequest(request);
+        event.setEventType("DONOR_RESPONDED");
+        event.setMessage(message);
+        requestEventRepository.save(event);
+
+        if (request.getRequester() != null) {
+            webhookService.dispatchEvent(
+                request.getRequester().getId(),
+                com.lifelink.webhook.dto.WebhookEventPayload.builder()
+                    .eventId(UUID.randomUUID())
+                    .eventType("DONOR_RESPONDED")
+                    .timestamp(LocalDateTime.now())
+                    .requestId(request.getId())
+                    .requestStatus(request.getStatus().name())
+                    .bloodType(request.getBloodType())
+                    .componentType(request.getComponentType().name())
+                    .urgency(request.getUrgency().name())
+                    .latitude(request.getLocation().getY())
+                    .longitude(request.getLocation().getX())
+                    .detail(com.lifelink.webhook.dto.WebhookEventPayload.Detail.builder()
+                        .donorId(donor.getId())
+                        .responseStatus(status.name())
+                        .build())
+                    .build()
+            );
         }
     }
 }
