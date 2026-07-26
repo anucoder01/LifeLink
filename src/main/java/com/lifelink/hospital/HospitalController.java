@@ -14,6 +14,10 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
+import com.lifelink.common.dto.PaginatedResponse;
+import com.lifelink.common.util.PaginationUtil;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Tag(name = "Hospital", description = "Hospital registration and geo-search")
 @RestController
@@ -29,12 +33,14 @@ public class HospitalController {
 
     /**
      * GET /api/v1/hospitals
-     * Returns all hospitals.
+     * Returns all hospitals with pagination.
      */
-    @Operation(summary = "List all hospitals")
+    @Operation(summary = "List all hospitals with pagination")
     @GetMapping
-    public ResponseEntity<List<HospitalDto>> getAll() {
-        return ResponseEntity.ok(hospitalService.getAll());
+    public ResponseEntity<PaginatedResponse<HospitalDto>> getAll(
+            @org.springdoc.core.annotations.ParameterObject Pageable pageable) {
+        Page<HospitalDto> page = hospitalService.getAll(pageable);
+        return ResponseEntity.ok(PaginationUtil.fromPage(page));
     }
 
     /**

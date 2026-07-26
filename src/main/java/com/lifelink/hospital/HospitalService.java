@@ -1,5 +1,8 @@
 package com.lifelink.hospital;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.lifelink.config.CacheNames;
 import com.lifelink.hospital.dto.CreateHospitalDto;
 import com.lifelink.hospital.dto.HospitalDto;
@@ -37,13 +40,11 @@ public class HospitalService {
      * Returns all hospitals.
      * Cached for 5 minutes; evicted on any hospital write.
      */
-    @Cacheable(value = CacheNames.HOSPITALS_ALL, key = "'all'")
+    @Cacheable(value = CacheNames.HOSPITALS_ALL, key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort.toString()")
     @Transactional(readOnly = true)
-    public List<HospitalDto> getAll() {
-        return hospitalRepository.findAll()
-                .stream()
-                .map(this::mapToDto)
-                .toList();
+    public org.springframework.data.domain.Page<HospitalDto> getAll(org.springframework.data.domain.Pageable pageable) {
+        return hospitalRepository.findAll(pageable)
+                .map(this::mapToDto);
     }
 
     /**

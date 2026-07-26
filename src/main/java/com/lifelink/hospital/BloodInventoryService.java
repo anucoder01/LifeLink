@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Slf4j
 @Service
@@ -28,15 +30,13 @@ public class BloodInventoryService {
     // -------------------------------------------------------------------------
 
     /**
-     * Returns the full inventory for a hospital.
+     * Returns the paginated inventory for a hospital.
      */
     @Transactional(readOnly = true)
-    public List<InventoryDto> getByHospital(UUID hospitalId) {
+    public Page<InventoryDto> getByHospital(UUID hospitalId, Pageable pageable) {
         assertHospitalExists(hospitalId);
-        return inventoryRepository.findByHospitalId(hospitalId)
-                .stream()
-                .map(this::mapToDto)
-                .toList();
+        return inventoryRepository.findByHospitalId(hospitalId, pageable)
+                .map(this::mapToDto);
     }
 
     /**

@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import com.lifelink.common.dto.PaginatedResponse;
+import com.lifelink.common.util.PaginationUtil;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Tag(name = "Blood Inventory", description = "Hospital blood stock management and availability queries")
 @RestController
@@ -27,12 +31,15 @@ public class BloodInventoryController {
 
     /**
      * GET /api/v1/hospitals/{hospitalId}/inventory
-     * Returns all inventory records for the given hospital.
+     * Returns all inventory records for the given hospital with pagination.
      */
-    @Operation(summary = "Get blood inventory for a hospital")
+    @Operation(summary = "Get blood inventory for a hospital with pagination")
     @GetMapping("/{hospitalId}/inventory")
-    public ResponseEntity<List<InventoryDto>> getByHospital(@PathVariable UUID hospitalId) {
-        return ResponseEntity.ok(inventoryService.getByHospital(hospitalId));
+    public ResponseEntity<PaginatedResponse<InventoryDto>> getByHospital(
+            @PathVariable UUID hospitalId,
+            @org.springdoc.core.annotations.ParameterObject Pageable pageable) {
+        Page<InventoryDto> page = inventoryService.getByHospital(hospitalId, pageable);
+        return ResponseEntity.ok(PaginationUtil.fromPage(page));
     }
 
     /**
