@@ -112,11 +112,13 @@ public class HospitalController {
      */
     @Operation(summary = "Find hospitals within a radius")
     @GetMapping("/nearby")
-    public ResponseEntity<List<NearbyHospitalDto>> findNearby(
+    public ResponseEntity<PaginatedResponse<NearbyHospitalDto>> findNearby(
             @RequestParam double lat,
             @RequestParam double lng,
-            @RequestParam(defaultValue = "10") double radiusKm) {
-        return ResponseEntity.ok(hospitalService.findNearby(lat, lng, radiusKm));
+            @RequestParam(defaultValue = "10") double radiusKm,
+            @org.springdoc.core.annotations.ParameterObject Pageable pageable) {
+        Page<NearbyHospitalDto> page = hospitalService.findNearby(lat, lng, radiusKm, pageable);
+        return ResponseEntity.ok(PaginationUtil.fromPage(page));
     }
 
     /**
@@ -125,13 +127,14 @@ public class HospitalController {
      */
     @Operation(summary = "Find nearby hospitals with a specific blood type in stock")
     @GetMapping("/nearby/blood")
-    public ResponseEntity<List<NearbyHospitalDto>> findNearbyWithBlood(
+    public ResponseEntity<PaginatedResponse<NearbyHospitalDto>> findNearbyWithBlood(
             @RequestParam double lat,
             @RequestParam double lng,
             @RequestParam(defaultValue = "10") double radiusKm,
             @RequestParam String bloodType,
-            @RequestParam String componentType) {
-        return ResponseEntity.ok(
-                hospitalService.findNearbyWithBlood(lat, lng, radiusKm, bloodType, componentType));
+            @RequestParam String componentType,
+            @org.springdoc.core.annotations.ParameterObject Pageable pageable) {
+        Page<NearbyHospitalDto> page = hospitalService.findNearbyWithBlood(lat, lng, radiusKm, bloodType, componentType, pageable);
+        return ResponseEntity.ok(PaginationUtil.fromPage(page));
     }
 }

@@ -144,17 +144,15 @@ public class HospitalService {
      */
     @Cacheable(
         value = CacheNames.HOSPITALS_NEARBY,
-        key = "T(java.lang.Math).round(#latitude*10000)+':'+T(java.lang.Math).round(#longitude*10000)+':'+#radiusKm"
+        key = "T(java.lang.Math).round(#latitude*10000)+':'+T(java.lang.Math).round(#longitude*10000)+':'+#radiusKm+':'+#pageable.pageNumber+':'+#pageable.pageSize"
     )
     @Transactional(readOnly = true)
-    public List<NearbyHospitalDto> findNearby(double latitude, double longitude, double radiusKm) {
+    public Page<NearbyHospitalDto> findNearby(double latitude, double longitude, double radiusKm, Pageable pageable) {
         double radiusMeters = (radiusKm > 0 ? radiusKm : 10.0) * METERS_PER_KM;
         Point origin = buildPoint(latitude, longitude);
 
-        return hospitalRepository.findWithinRadius(origin, radiusMeters)
-                .stream()
-                .map(h -> mapToNearbyDto(h, origin))
-                .toList();
+        return hospitalRepository.findWithinRadius(origin, radiusMeters, pageable)
+                .map(h -> mapToNearbyDto(h, origin));
     }
 
     /**
@@ -163,21 +161,19 @@ public class HospitalService {
      */
     @Cacheable(
         value = CacheNames.HOSPITALS_NEARBY_BLOOD,
-        key = "T(java.lang.Math).round(#latitude*10000)+':'+T(java.lang.Math).round(#longitude*10000)+':'+#radiusKm+':'+#bloodType+':'+#componentType"
+        key = "T(java.lang.Math).round(#latitude*10000)+':'+T(java.lang.Math).round(#longitude*10000)+':'+#radiusKm+':'+#bloodType+':'+#componentType+':'+#pageable.pageNumber+':'+#pageable.pageSize"
     )
     @Transactional(readOnly = true)
-    public List<NearbyHospitalDto> findNearbyWithBlood(
+    public Page<NearbyHospitalDto> findNearbyWithBlood(
             double latitude, double longitude, double radiusKm,
-            String bloodType, String componentType) {
+            String bloodType, String componentType, Pageable pageable) {
 
         double radiusMeters = (radiusKm > 0 ? radiusKm : 10.0) * METERS_PER_KM;
         Point origin = buildPoint(latitude, longitude);
 
         return hospitalRepository.findNearbyWithAvailableBlood(
-                        origin, radiusMeters, bloodType.toUpperCase(), componentType.toUpperCase())
-                .stream()
-                .map(h -> mapToNearbyDto(h, origin))
-                .toList();
+                        origin, radiusMeters, bloodType.toUpperCase(), componentType.toUpperCase(), pageable)
+                .map(h -> mapToNearbyDto(h, origin));
     }
 
     // -------------------------------------------------------------------------
