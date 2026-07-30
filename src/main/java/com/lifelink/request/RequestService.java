@@ -30,6 +30,8 @@ public class RequestService {
     private final BloodChainService bloodChainService;
     private final RequestEventRepository requestEventRepository;
     private final com.lifelink.webhook.WebhookService webhookService;
+    private final com.lifelink.institution.BloodBankRepository bloodBankRepository;
+    private final com.lifelink.institution.HospitalForwardRepository hospitalForwardRepository;
 
     @Transactional
     public EmergencyRequest createRequest(EmergencyRequest request) {
@@ -146,30 +148,53 @@ public class RequestService {
     private void broadcastToDonors(EmergencyRequest request) {
         List<Donor> eligibleDonors = matchingEngine.findEligibleDonors(request, request.getCurrentRadiusKm());
 
-        if (eligibleDonors.isEmpty() && request.getCurrentRadiusKm() >= 30) {
+        // Filter out already notified donors
+        List<Donor> unnotifiedDonors = eligibleDonors.stream()
+                .filter(donor -> requestResponseRepository.findByRequestIdAndDonorId(request.getId(), donor.getId()).isEmpty())
+                .collect(java.util.stream.Collectors.toList());
+
+        if (unnotifiedDonors.isEmpty() && request.getCurrentRadiusKm() >= maxRadiusKm) {
             // ----------------------------------------------------------------
-            // BLOOD CHAIN ACTIVATION: No eligible donors found within 30km.
+            // BLOOD CHAIN ACTIVATION: No eligible donors found within max radius.
             // Trigger SMS invites to trusted contacts of all active donors.
             // ----------------------------------------------------------------
-            log.warn("No donors found at 30km radius for request {}. Activating Blood Chain.",
-                    request.getId());
+            log.warn("No donors found at max radius {}km for request {}. Activating SOS and Blood Chain.",
+                    maxRadiusKm, request.getId());
             bloodChainService.activateBloodChain(request);
+            triggerBloodBankFallback(request);
             return;
         }
 
-        for (Donor donor : eligibleDonors) {
-            // Check if already notified
-            if (requestResponseRepository.findByRequestIdAndDonorId(request.getId(), donor.getId()).isEmpty()) {
-                RequestResponse response = new RequestResponse();
-                response.setRequest(request);
-                response.setDonor(donor);
-                response.setStatus(RequestResponseStatus.NOTIFIED);
-                requestResponseRepository.save(response);
+        List<Donor> batchToNotify;
+        if (request.isDisasterMode()) {
+            batchToNotify = unnotifiedDonors; // Broadcast to all immediately
+        } else {
+            batchToNotify = unnotifiedDonors.stream().limit(5).collect(java.util.stream.Collectors.toList());
+        }
 
-                fcmService.sendNotification(donor.getFcmToken(), "Emergency Blood Request",
-                        "Blood type " + request.getBloodType() + " is needed urgently.",
-                        request.getUrgency() == Urgency.CRITICAL);
-            }
+        for (Donor donor : batchToNotify) {
+            com.lifelink.request.RequestResponse response = new com.lifelink.request.RequestResponse();
+            response.setRequest(request);
+            response.setDonor(donor);
+            response.setStatus(com.lifelink.request.RequestResponseStatus.NOTIFIED);
+            requestResponseRepository.save(response);
+
+            fcmService.sendNotification(donor.getFcmToken(), "Emergency Blood Request",
+                    "Blood type " + request.getBloodType() + " is needed urgently.",
+                    request.getUrgency() == com.lifelink.request.Urgency.CRITICAL);
+        }
+    }
+
+    private void triggerBloodBankFallback(EmergencyRequest request) {
+        List<com.lifelink.institution.BloodBank> nearbyBanks = bloodBankRepository.findActiveBloodBanksWithinRadius(
+                request.getLocation(), maxRadiusKm * 1000.0);
+        for (com.lifelink.institution.BloodBank bank : nearbyBanks) {
+            com.lifelink.institution.HospitalForward forward = new com.lifelink.institution.HospitalForward();
+            forward.setRequest(request);
+            forward.setBloodBank(bank);
+            forward.setStatus("PENDING");
+            hospitalForwardRepository.save(forward);
+            log.info("Forwarded request {} to blood bank {}", request.getId(), bank.getName());
         }
     }
 
@@ -182,7 +207,28 @@ public class RequestService {
     public void autoExpandRadius() {
         List<EmergencyRequest> activeRequests = requestRepository.findByStatus(RequestStatus.PENDING);
         for (EmergencyRequest req : activeRequests) {
-            if (req.getCurrentRadiusKm() < maxRadiusKm) {
+            if (req.isDisasterMode()) {
+                // In disaster mode, radius should already be maxed, but just in case:
+                if (req.getCurrentRadiusKm() < maxRadiusKm) {
+                    req.setCurrentRadiusKm(maxRadiusKm);
+                    requestRepository.save(req);
+                    logEventAndNotify(req, "RADIUS_EXPANDED", "Search radius expanded to " + req.getCurrentRadiusKm() + "km");
+                }
+                broadcastToDonors(req);
+                continue;
+            }
+
+            // Normal mode: check if there are any eligible unnotified donors in CURRENT radius
+            List<Donor> eligibleDonors = matchingEngine.findEligibleDonors(req, req.getCurrentRadiusKm());
+            long unnotifiedCount = eligibleDonors.stream()
+                .filter(donor -> requestResponseRepository.findByRequestIdAndDonorId(req.getId(), donor.getId()).isEmpty())
+                .count();
+
+            if (unnotifiedCount > 0) {
+                // We still have donors in current radius. Just broadcast to the next batch.
+                broadcastToDonors(req);
+            } else if (req.getCurrentRadiusKm() < maxRadiusKm) {
+                // No more donors in current radius, expand radius
                 if (req.getCurrentRadiusKm() < 15) {
                     req.setCurrentRadiusKm(15);
                 } else if (req.getCurrentRadiusKm() < 30) {
@@ -193,6 +239,9 @@ public class RequestService {
                 
                 requestRepository.save(req);
                 logEventAndNotify(req, "RADIUS_EXPANDED", "Search radius expanded to " + req.getCurrentRadiusKm() + "km");
+                broadcastToDonors(req);
+            } else {
+                // At max radius and no more donors. Broadcast will trigger SOS fallback.
                 broadcastToDonors(req);
             }
         }

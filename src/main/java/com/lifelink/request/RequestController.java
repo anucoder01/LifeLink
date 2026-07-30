@@ -178,5 +178,19 @@ public class RequestController {
         dto.setCreatedAt(entity.getCreatedAt());
         return dto;
     }
+    @Operation(summary = "Get shareable public link for emergency request")
+    @GetMapping("/{id}/share")
+    public ResponseEntity<com.lifelink.request.dto.EmergencyRequestShareDto> getShareableLink(@PathVariable UUID id) {
+        EmergencyRequest request = requestService.getById(id);
+        com.lifelink.request.dto.EmergencyRequestShareDto dto = com.lifelink.request.dto.EmergencyRequestShareDto.builder()
+                .id(request.getId().toString())
+                .bloodType(request.getBloodType())
+                .componentType(request.getComponentType().name())
+                .urgency(request.getUrgency().name())
+                .status(request.getStatus().name())
+                .latitude(request.getLocation().getY())
+                .longitude(request.getLocation().getX())
+                .build();
+        return ResponseEntity.ok(dto);
+    }
 }
-

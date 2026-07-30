@@ -42,8 +42,11 @@ public class EmergencyRequest {
     @Column(nullable = false, length = 20)
     private RequestStatus status = RequestStatus.PENDING;
 
-    @Column(name = "current_radius_km")
-    private Integer currentRadiusKm = 5;
+    @Column(name = "current_radius_km", nullable = false)
+    private int currentRadiusKm = 5;
+
+    @Column(name = "disaster_mode", nullable = false)
+    private boolean disasterMode = false;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
