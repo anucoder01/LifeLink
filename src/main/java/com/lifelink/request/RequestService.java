@@ -179,9 +179,10 @@ public class RequestService {
             response.setStatus(com.lifelink.request.RequestResponseStatus.NOTIFIED);
             requestResponseRepository.save(response);
 
-            fcmService.sendNotification(donor.getFcmToken(), "Emergency Blood Request",
+            fcmService.sendNotificationToDonor(donor, "Emergency Blood Request",
                     "Blood type " + request.getBloodType() + " is needed urgently.",
-                    request.getUrgency() == com.lifelink.request.Urgency.CRITICAL);
+                    request.getUrgency() == com.lifelink.request.Urgency.CRITICAL,
+                    request.getId().toString());
         }
     }
 
