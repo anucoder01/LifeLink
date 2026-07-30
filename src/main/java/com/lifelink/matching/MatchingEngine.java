@@ -33,6 +33,7 @@ public class MatchingEngine {
 
         return donorsInRange.stream()
                 .filter(d -> EligibilityUtil.isEligible(d, request.getComponentType()))
+                .filter(d -> d.getConsent() == null || Boolean.TRUE.equals(d.getConsent().getAllowEmergencyNotifications()))
                 .collect(Collectors.toList());
     }
 }

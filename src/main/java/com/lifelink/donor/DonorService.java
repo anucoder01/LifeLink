@@ -1,8 +1,12 @@
 package com.lifelink.donor;
 
+import com.lifelink.donor.dto.DonationHistoryDto;
 import com.lifelink.donor.dto.DonorDto;
 import com.lifelink.donor.dto.FcmTokenDto;
 import com.lifelink.donor.dto.LocationDto;
+import com.lifelink.request.RequestResponse;
+import com.lifelink.request.RequestResponseRepository;
+import com.lifelink.request.RequestResponseStatus;
 import com.lifelink.user.User;
 import com.lifelink.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +26,7 @@ public class DonorService {
 
     private final DonorRepository donorRepository;
     private final UserRepository userRepository;
+    private final RequestResponseRepository requestResponseRepository;
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
     /**
@@ -98,6 +103,24 @@ public class DonorService {
         donor = donorRepository.save(donor);
         log.info("Donor {} identity verified", donor.getId());
         return mapToDto(donor, user);
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.List<DonationHistoryDto> getDonationHistory(String phone) {
+        User user = findUserByPhone(phone);
+        Donor donor = findDonorByUser(user);
+        
+        return requestResponseRepository.findByDonorIdAndStatus(donor.getId(), RequestResponseStatus.DONATED)
+                .stream()
+                .map(response -> {
+                    DonationHistoryDto dto = new DonationHistoryDto();
+                    dto.setRequestId(response.getRequest().getId().toString());
+                    dto.setHospitalOrRequesterName(response.getRequest().getRequester().getName()); // Assuming requester user name
+                    dto.setComponentType(response.getRequest().getComponentType().name());
+                    dto.setDonatedAt(response.getRespondedAt()); // We might want a 'donatedAt' instead, but respondedAt works for now
+                    return dto;
+                })
+                .collect(java.util.stream.Collectors.toList());
     }
 
     // -------------------------------------------------------------------------

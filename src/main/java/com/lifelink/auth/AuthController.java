@@ -88,7 +88,9 @@ public class AuthController {
             return ResponseEntity.status(404).body("User not found. Please register first.");
         }
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getPhone(), null, user.getAuthorities());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+            user.getPhone(), null, java.util.Collections.singletonList(
+                new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
         String token = tokenProvider.generateToken(authentication);
         String refreshToken = tokenProvider.generateRefreshToken(authentication);
 
@@ -121,7 +123,9 @@ public class AuthController {
             user = userRepository.save(user);
         }
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getPhone(), null, user.getAuthorities());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+            user.getPhone(), null, java.util.Collections.singletonList(
+                new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
         String token = tokenProvider.generateToken(authentication);
         String refreshToken = tokenProvider.generateRefreshToken(authentication);
 

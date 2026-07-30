@@ -76,5 +76,12 @@ public class DonorController {
             @Valid @RequestBody com.lifelink.donor.dto.VerifyIdentityDto dto) {
         return ResponseEntity.ok(donorService.verifyIdentity(authentication.getName(), dto));
     }
+
+    @Operation(summary = "Get full donation history")
+    @GetMapping("/me/history")
+    public ResponseEntity<java.util.List<com.lifelink.donor.dto.DonationHistoryDto>> getDonationHistory(
+            Authentication authentication) {
+        return ResponseEntity.ok(donorService.getDonationHistory(authentication.getName()));
+    }
 }
 

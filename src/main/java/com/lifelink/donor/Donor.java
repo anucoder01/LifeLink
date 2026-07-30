@@ -40,4 +40,16 @@ public class Donor {
 
     @Column(name = "fcm_token")
     private String fcmToken;
+
+    @Column(name = "government_id_hash", length = 64)
+    private String governmentIdHash;
+
+    @Column(name = "identity_verified")
+    private Boolean identityVerified = false;
+
+    @OneToOne(mappedBy = "donor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private DonorHealthQuestionnaire healthQuestionnaire;
+
+    @OneToOne(mappedBy = "donor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private DonorConsent consent;
 }

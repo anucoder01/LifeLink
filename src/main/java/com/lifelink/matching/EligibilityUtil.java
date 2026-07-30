@@ -9,6 +9,18 @@ import java.time.temporal.ChronoUnit;
 public class EligibilityUtil {
 
     public static boolean isEligible(Donor donor, ComponentType componentType) {
+        // Health Questionnaire Checks
+        if (donor.getHealthQuestionnaire() != null) {
+            com.lifelink.donor.DonorHealthQuestionnaire health = donor.getHealthQuestionnaire();
+            // Hard blocks for donation
+            if (Boolean.TRUE.equals(health.getIsPregnant()) ||
+                Boolean.TRUE.equals(health.getConsumedAlcoholRecently()) ||
+                Boolean.TRUE.equals(health.getHasRecentTattoos()) ||
+                Boolean.TRUE.equals(health.getHadRecentSurgery())) {
+                return false;
+            }
+        }
+
         if (donor.getLastDonationDate() == null) {
             return true;
         }

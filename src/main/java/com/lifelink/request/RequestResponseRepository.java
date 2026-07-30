@@ -11,4 +11,5 @@ public interface RequestResponseRepository extends JpaRepository<RequestResponse
     List<RequestResponse> findByRequestId(UUID requestId);
     Page<RequestResponse> findByRequestId(UUID requestId, Pageable pageable);
     Optional<RequestResponse> findByRequestIdAndDonorId(UUID requestId, UUID donorId);
+    List<RequestResponse> findByDonorIdAndStatus(UUID donorId, RequestResponseStatus status);
 }
