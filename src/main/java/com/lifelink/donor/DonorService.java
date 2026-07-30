@@ -77,6 +77,29 @@ public class DonorService {
         return mapToDto(donor, user);
     }
 
+    @Transactional
+    public DonorDto verifyIdentity(String phone, com.lifelink.donor.dto.VerifyIdentityDto dto) {
+        User user = findUserByPhone(phone);
+        Donor donor = findDonorByUser(user);
+        
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = md.digest(dto.getGovernmentId().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            donor.setGovernmentIdHash(sb.toString());
+            donor.setIdentityVerified(true);
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 algorithm not available", e);
+        }
+        
+        donor = donorRepository.save(donor);
+        log.info("Donor {} identity verified", donor.getId());
+        return mapToDto(donor, user);
+    }
+
     // -------------------------------------------------------------------------
     // Internal helpers
     // -------------------------------------------------------------------------

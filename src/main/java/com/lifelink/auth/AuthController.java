@@ -1,8 +1,7 @@
 package com.lifelink.auth;
 
-import com.lifelink.auth.dto.AuthRequest;
-import com.lifelink.auth.dto.AuthResponse;
-import com.lifelink.auth.dto.RegisterRequest;
+import com.lifelink.auth.dto.*;
+import com.google.firebase.auth.FirebaseToken;
 import com.lifelink.bloodchain.BloodChainService;
 import com.lifelink.bloodchain.dto.InviteDetailsDto;
 import com.lifelink.donor.Donor;
@@ -36,6 +35,8 @@ public class AuthController {
     private final DonorRepository donorRepository;
     private final PasswordEncoder passwordEncoder;
     private final BloodChainService bloodChainService;
+    private final OtpService otpService;
+    private final FirebaseAuthService firebaseAuthService;
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
     @Operation(summary = "Login with phone and password")
@@ -46,7 +47,85 @@ public class AuthController {
         );
 
         String token = tokenProvider.generateToken(authentication);
-        return ResponseEntity.ok(new AuthResponse(token));
+        String refreshToken = tokenProvider.generateRefreshToken(authentication);
+        return ResponseEntity.ok(new AuthResponse(token, refreshToken));
+    }
+
+    @Operation(summary = "Refresh access token")
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@Valid @RequestBody RefreshRequest request) {
+        String refreshToken = request.getRefreshToken();
+        
+        if (tokenProvider.validateToken(refreshToken) && tokenProvider.isRefreshToken(refreshToken)) {
+            Authentication authentication = tokenProvider.getAuthentication(refreshToken);
+            String newToken = tokenProvider.generateToken(authentication);
+            String newRefreshToken = tokenProvider.generateRefreshToken(authentication);
+            return ResponseEntity.ok(new AuthResponse(newToken, newRefreshToken));
+        }
+        
+        return ResponseEntity.status(401).body("Invalid refresh token");
+    }
+
+    @Operation(summary = "Send OTP to phone number")
+    @PostMapping("/otp/send")
+    public ResponseEntity<?> sendOtp(@Valid @RequestBody OtpSendRequest request) {
+        otpService.sendOtp(request.getPhone());
+        return ResponseEntity.ok("OTP sent successfully");
+    }
+
+    @Operation(summary = "Verify OTP and login")
+    @PostMapping("/otp/verify")
+    public ResponseEntity<?> verifyOtp(@Valid @RequestBody OtpVerifyRequest request) {
+        if (!otpService.verifyOtp(request.getPhone(), request.getOtp())) {
+            return ResponseEntity.status(401).body("Invalid or expired OTP");
+        }
+
+        User user = userRepository.findByPhone(request.getPhone())
+                .orElse(null);
+
+        if (user == null) {
+            // Depending on requirements, we could auto-register or return a specific status.
+            return ResponseEntity.status(404).body("User not found. Please register first.");
+        }
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getPhone(), null, user.getAuthorities());
+        String token = tokenProvider.generateToken(authentication);
+        String refreshToken = tokenProvider.generateRefreshToken(authentication);
+
+        return ResponseEntity.ok(new AuthResponse(token, refreshToken));
+    }
+
+    @Operation(summary = "Login with Google Sign-In")
+    @PostMapping("/google")
+    public ResponseEntity<?> googleSignIn(@Valid @RequestBody GoogleSignInRequest request) {
+        FirebaseToken decodedToken = firebaseAuthService.verifyIdToken(request.getIdToken());
+        if (decodedToken == null) {
+            return ResponseEntity.status(401).body("Invalid Google ID Token");
+        }
+
+        String email = decodedToken.getEmail();
+        if (email == null) {
+            return ResponseEntity.badRequest().body("Google account must have an email");
+        }
+
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            // Auto-register google users as REQUESTERs for now, since they didn't provide blood type.
+            user = new User();
+            user.setName(decodedToken.getName());
+            user.setEmail(email);
+            // Generate a placeholder phone since it's required (or adapt DB schema)
+            user.setPhone("GGL-" + decodedToken.getUid()); 
+            user.setPasswordHash(passwordEncoder.encode(decodedToken.getUid())); // dummy password
+            user.setRole(Role.REQUESTER);
+            user = userRepository.save(user);
+        }
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getPhone(), null, user.getAuthorities());
+        String token = tokenProvider.generateToken(authentication);
+        String refreshToken = tokenProvider.generateRefreshToken(authentication);
+
+        return ResponseEntity.ok(new AuthResponse(token, refreshToken));
     }
 
     @Operation(summary = "Register a new user")

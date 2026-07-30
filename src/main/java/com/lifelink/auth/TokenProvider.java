@@ -28,6 +28,9 @@ public class TokenProvider {
     @Value("${jwt.expiration}")
     private long jwtExpirationMs;
 
+    @Value("${jwt.refreshExpiration:604800000}") // Default 7 days
+    private long jwtRefreshExpirationMs;
+
     private SecretKey key;
 
     @PostConstruct
@@ -54,10 +57,43 @@ public class TokenProvider {
                 .compact();
     }
 
+    public String generateRefreshToken(Authentication authentication) {
+        String username = authentication.getName();
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtRefreshExpirationMs);
+        
+        String role = authentication.getAuthorities().stream()
+                .findFirst()
+                .map(GrantedAuthority::getAuthority)
+                .orElse("ROLE_USER");
+
+        return Jwts.builder()
+                .subject(username)
+                .claim("role", role)
+                .claim("type", "refresh")
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(key)
+                .compact();
+    }
+
     public boolean validateToken(String token) {
         try {
             Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
             return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    public boolean isRefreshToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return "refresh".equals(claims.get("type"));
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }

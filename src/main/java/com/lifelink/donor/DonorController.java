@@ -68,5 +68,13 @@ public class DonorController {
             @RequestParam boolean active) {
         return ResponseEntity.ok(donorService.setActiveStatus(authentication.getName(), active));
     }
+
+    @Operation(summary = "Verify donor identity with government ID")
+    @PostMapping("/me/verify-identity")
+    public ResponseEntity<DonorDto> verifyIdentity(
+            Authentication authentication,
+            @Valid @RequestBody com.lifelink.donor.dto.VerifyIdentityDto dto) {
+        return ResponseEntity.ok(donorService.verifyIdentity(authentication.getName(), dto));
+    }
 }
 
