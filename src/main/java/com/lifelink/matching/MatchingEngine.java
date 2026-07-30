@@ -17,6 +17,7 @@ public class MatchingEngine {
 
     private final DonorRepository donorRepository;
     private final CompatibilityMatrix compatibilityMatrix;
+    private final DistanceMatrixMockService distanceMatrixMockService;
 
     public List<Donor> findEligibleDonors(EmergencyRequest request, int radiusKm) {
         // compatibilityMatrix is a Spring bean — call goes through the cache proxy
@@ -34,6 +35,11 @@ public class MatchingEngine {
         return donorsInRange.stream()
                 .filter(d -> EligibilityUtil.isEligible(d, request.getComponentType()))
                 .filter(d -> d.getConsent() == null || Boolean.TRUE.equals(d.getConsent().getAllowEmergencyNotifications()))
+                .sorted((d1, d2) -> {
+                    int eta1 = distanceMatrixMockService.estimateTravelTimeMinutes(d1.getLocation(), request.getLocation());
+                    int eta2 = distanceMatrixMockService.estimateTravelTimeMinutes(d2.getLocation(), request.getLocation());
+                    return Integer.compare(eta1, eta2);
+                })
                 .collect(Collectors.toList());
     }
 }

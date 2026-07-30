@@ -62,3 +62,7 @@ twilio:
   account-sid: ${TWILIO_SID:}
   auth-token: ${TWILIO_AUTH_TOKEN:}
   from-number: ${TWILIO_FROM_NUMBER:+10000000000}
+
+# Matching configuration
+matching:
+  max-radius-km: ${MATCHING_MAX_RADIUS_KM:50}

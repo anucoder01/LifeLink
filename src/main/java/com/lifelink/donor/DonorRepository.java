@@ -14,4 +14,18 @@ public interface DonorRepository extends JpaRepository<Donor, UUID> {
 
     @Query(value = "SELECT d.* FROM donors d WHERE d.is_active = true AND d.blood_type IN :compatibleBloodTypes AND ST_DWithin(d.location, :location, :radiusMeters)", nativeQuery = true)
     List<Donor> findEligibleDonorsWithinRadius(@Param("location") Point location, @Param("radiusMeters") double radiusMeters, @Param("compatibleBloodTypes") List<String> compatibleBloodTypes);
+    @Query(value = """
+        SELECT d.* FROM donors d
+        WHERE d.is_active = true
+        AND ST_DWithin(
+            d.location,
+            :center,
+            :radiusMeters,
+            false
+        )
+    """, nativeQuery = true)
+    List<Donor> findActiveDonorsWithinRadius(
+            @Param("center") Point center,
+            @Param("radiusMeters") double radiusMeters
+    );
 }

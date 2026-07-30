@@ -173,15 +173,23 @@ public class RequestService {
         }
     }
 
+    @org.springframework.beans.factory.annotation.Value("${matching.max-radius-km:50}")
+    private int maxRadiusKm;
+
     // Auto-expand radius every 5 minutes if no response
     @Scheduled(fixedDelay = 300000)
     @Transactional
     public void autoExpandRadius() {
         List<EmergencyRequest> activeRequests = requestRepository.findByStatus(RequestStatus.PENDING);
         for (EmergencyRequest req : activeRequests) {
-            if (req.getCurrentRadiusKm() < 30) {
-                if (req.getCurrentRadiusKm() == 5) req.setCurrentRadiusKm(15);
-                else if (req.getCurrentRadiusKm() == 15) req.setCurrentRadiusKm(30);
+            if (req.getCurrentRadiusKm() < maxRadiusKm) {
+                if (req.getCurrentRadiusKm() < 15) {
+                    req.setCurrentRadiusKm(15);
+                } else if (req.getCurrentRadiusKm() < 30) {
+                    req.setCurrentRadiusKm(30);
+                } else if (req.getCurrentRadiusKm() < maxRadiusKm) {
+                    req.setCurrentRadiusKm(maxRadiusKm);
+                }
                 
                 requestRepository.save(req);
                 logEventAndNotify(req, "RADIUS_EXPANDED", "Search radius expanded to " + req.getCurrentRadiusKm() + "km");
