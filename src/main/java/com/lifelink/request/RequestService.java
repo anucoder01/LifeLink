@@ -30,7 +30,7 @@ public class RequestService {
     private final BloodChainService bloodChainService;
     private final RequestEventRepository requestEventRepository;
     private final com.lifelink.webhook.WebhookService webhookService;
-    private final com.lifelink.institution.BloodBankRepository bloodBankRepository;
+    private final com.lifelink.bloodbank.BloodBankRepository bloodBankRepository;
     private final com.lifelink.institution.HospitalForwardRepository hospitalForwardRepository;
 
     @Transactional
@@ -187,9 +187,9 @@ public class RequestService {
     }
 
     private void triggerBloodBankFallback(EmergencyRequest request) {
-        List<com.lifelink.institution.BloodBank> nearbyBanks = bloodBankRepository.findActiveBloodBanksWithinRadius(
+        List<com.lifelink.bloodbank.BloodBank> nearbyBanks = bloodBankRepository.findActiveBloodBanksWithinRadius(
                 request.getLocation(), maxRadiusKm * 1000.0);
-        for (com.lifelink.institution.BloodBank bank : nearbyBanks) {
+        for (com.lifelink.bloodbank.BloodBank bank : nearbyBanks) {
             com.lifelink.institution.HospitalForward forward = new com.lifelink.institution.HospitalForward();
             forward.setRequest(request);
             forward.setBloodBank(bank);
