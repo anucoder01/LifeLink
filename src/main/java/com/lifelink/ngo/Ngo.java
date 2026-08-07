@@ -1,5 +1,6 @@
 package com.lifelink.ngo;
 
+import com.lifelink.user.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,6 +19,10 @@ public class Ngo {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
 
     @Column(nullable = false, length = 150)
     private String name;
