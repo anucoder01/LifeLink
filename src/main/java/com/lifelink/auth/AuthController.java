@@ -33,6 +33,8 @@ public class AuthController {
     private final TokenProvider tokenProvider;
     private final UserRepository userRepository;
     private final DonorRepository donorRepository;
+    private final com.lifelink.bloodbank.BloodBankRepository bloodBankRepository;
+    private final com.lifelink.ngo.NgoRepository ngoRepository;
     private final PasswordEncoder passwordEncoder;
     private final BloodChainService bloodChainService;
     private final OtpService otpService;
@@ -159,6 +161,36 @@ public class AuthController {
                 donor.setLocation(location);
             }
             donorRepository.save(donor);
+        } else if (request.getRole() == Role.BLOOD_BANK_ADMIN) {
+            com.lifelink.bloodbank.BloodBank bloodBank = new com.lifelink.bloodbank.BloodBank();
+            bloodBank.setUser(user);
+            bloodBank.setName(request.getInstitutionName() != null ? request.getInstitutionName() : request.getName());
+            bloodBank.setAddress(request.getAddress());
+            bloodBank.setContactPhone(request.getContactPhone());
+            bloodBank.setLicenseNumber(request.getLicenseOrRegistrationNumber());
+            bloodBank.setOperatingHours(request.getOperatingHours());
+            if (request.getLatitude() != null && request.getLongitude() != null) {
+                Point location = geometryFactory.createPoint(new Coordinate(request.getLongitude(), request.getLatitude()));
+                location.setSRID(4326);
+                bloodBank.setLocation(location);
+            } else {
+                return ResponseEntity.badRequest().body("Latitude and longitude are required for Blood Bank registration");
+            }
+            bloodBankRepository.save(bloodBank);
+        } else if (request.getRole() == Role.NGO_ADMIN) {
+            com.lifelink.ngo.Ngo ngo = new com.lifelink.ngo.Ngo();
+            ngo.setUser(user);
+            ngo.setName(request.getInstitutionName() != null ? request.getInstitutionName() : request.getName());
+            ngo.setAddress(request.getAddress());
+            ngo.setContactPhone(request.getContactPhone());
+            ngo.setRegistrationNumber(request.getLicenseOrRegistrationNumber());
+            ngo.setFocusAreas(request.getFocusAreas());
+            if (request.getLatitude() != null && request.getLongitude() != null) {
+                Point location = geometryFactory.createPoint(new Coordinate(request.getLongitude(), request.getLatitude()));
+                location.setSRID(4326);
+                ngo.setLocation(location);
+            }
+            ngoRepository.save(ngo);
         }
 
         return ResponseEntity.ok("User registered successfully");
