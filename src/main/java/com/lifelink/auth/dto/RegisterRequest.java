@@ -14,4 +14,12 @@ public class RegisterRequest {
     private String bloodType;
     private Double latitude;
     private Double longitude;
+    
+    // For Institutions (Blood Bank / NGO):
+    private String institutionName;
+    private String address;
+    private String contactPhone;
+    private String licenseOrRegistrationNumber;
+    private String operatingHours;
+    private String focusAreas;
 }
