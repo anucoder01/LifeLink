@@ -1,6 +1,7 @@
 package com.lifelink.institution;
 
 import com.lifelink.request.EmergencyRequest;
+import com.lifelink.bloodbank.BloodBank;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
