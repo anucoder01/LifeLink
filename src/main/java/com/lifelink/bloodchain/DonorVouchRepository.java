@@ -9,6 +9,7 @@ import java.util.UUID;
 public interface DonorVouchRepository extends JpaRepository<DonorVouch, UUID> {
 
     List<DonorVouch> findAllByDonorId(UUID donorId);
+    org.springframework.data.domain.Page<DonorVouch> findAllByDonorId(UUID donorId, org.springframework.data.domain.Pageable pageable);
 
     long countByDonorId(UUID donorId);
 
