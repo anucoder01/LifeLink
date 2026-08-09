@@ -32,6 +32,8 @@ public class RequestService {
     private final com.lifelink.webhook.WebhookService webhookService;
     private final com.lifelink.bloodbank.BloodBankRepository bloodBankRepository;
     private final com.lifelink.institution.HospitalForwardRepository hospitalForwardRepository;
+    private final RequestSseService requestSseService;
+    private final com.lifelink.driver.DriverRepository driverRepository;
 
     @Transactional
     public EmergencyRequest createRequest(EmergencyRequest request) {
@@ -301,6 +303,47 @@ public class RequestService {
         return requestRepository.findByRequesterId(user.getId(), pageable);
     }
 
+    @Transactional
+    public void requestDriver(UUID requestId, String requesterPhone) {
+        EmergencyRequest request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Request not found: " + requestId));
+
+        com.lifelink.user.User user = userRepository.findByPhone(requesterPhone)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (!request.getRequester().getId().equals(user.getId())) {
+            // Also allow donors who have ACCEPTED the request to request a driver
+            Donor donor = donorRepository.findByUserId(user.getId()).orElse(null);
+            if (donor != null) {
+                RequestResponse response = requestResponseRepository.findByRequestIdAndDonorId(requestId, donor.getId()).orElse(null);
+                if (response == null || response.getStatus() != RequestResponseStatus.ACCEPTED) {
+                    throw new org.springframework.security.access.AccessDeniedException("Not authorized to request driver for this request");
+                }
+            } else {
+                throw new org.springframework.security.access.AccessDeniedException("Not authorized to request driver for this request");
+            }
+        }
+
+        // Find available drivers within 15km
+        double radiusMeters = 15000.0;
+        // using DriverRepository... wait, I need to inject DriverRepository or call DriverService.
+        // It's better to just send an FCM notification to nearby drivers.
+        logEventAndNotify(request, "DRIVER_REQUESTED", "A driver has been requested for this emergency.");
+        
+        // Broadcast to drivers
+        List<com.lifelink.driver.Driver> nearbyDrivers = 
+            driverRepository.findAvailableDriversWithinRadius(request.getLocation(), radiusMeters);
+
+        for (com.lifelink.driver.Driver driver : nearbyDrivers) {
+            fcmService.sendNotificationToDriver(
+                driver,
+                "Driver Needed!",
+                "A blood donor needs transport to a hospital.",
+                request.getId().toString()
+            );
+        }
+    }
+
     @Transactional(readOnly = true)
     public org.springframework.data.domain.Page<RequestResponse> getRequestResponses(UUID requestId, String requesterPhone, org.springframework.data.domain.Pageable pageable) {
         EmergencyRequest request = requestRepository.findById(requestId)
@@ -339,21 +382,21 @@ public class RequestService {
         requestEventRepository.save(event);
 
         if (request.getRequester() != null) {
-            webhookService.dispatchEvent(
-                request.getRequester().getId(),
-                com.lifelink.webhook.dto.WebhookEventPayload.builder()
-                    .eventId(UUID.randomUUID())
-                    .eventType(eventType)
-                    .timestamp(LocalDateTime.now())
-                    .requestId(request.getId())
-                    .requestStatus(request.getStatus().name())
-                    .bloodType(request.getBloodType())
-                    .componentType(request.getComponentType().name())
-                    .urgency(request.getUrgency().name())
-                    .latitude(request.getLocation().getY())
-                    .longitude(request.getLocation().getX())
-                    .build()
-            );
+            com.lifelink.webhook.dto.WebhookEventPayload payload = com.lifelink.webhook.dto.WebhookEventPayload.builder()
+                .eventId(UUID.randomUUID())
+                .eventType(eventType)
+                .timestamp(LocalDateTime.now())
+                .requestId(request.getId())
+                .requestStatus(request.getStatus().name())
+                .bloodType(request.getBloodType())
+                .componentType(request.getComponentType().name())
+                .urgency(request.getUrgency().name())
+                .latitude(request.getLocation().getY())
+                .longitude(request.getLocation().getX())
+                .build();
+            
+            webhookService.dispatchEvent(request.getRequester().getId(), payload);
+            requestSseService.dispatchEvent(request.getId(), payload);
         }
     }
 
@@ -365,25 +408,25 @@ public class RequestService {
         requestEventRepository.save(event);
 
         if (request.getRequester() != null) {
-            webhookService.dispatchEvent(
-                request.getRequester().getId(),
-                com.lifelink.webhook.dto.WebhookEventPayload.builder()
-                    .eventId(UUID.randomUUID())
-                    .eventType("DONOR_RESPONDED")
-                    .timestamp(LocalDateTime.now())
-                    .requestId(request.getId())
-                    .requestStatus(request.getStatus().name())
-                    .bloodType(request.getBloodType())
-                    .componentType(request.getComponentType().name())
-                    .urgency(request.getUrgency().name())
-                    .latitude(request.getLocation().getY())
-                    .longitude(request.getLocation().getX())
-                    .detail(com.lifelink.webhook.dto.WebhookEventPayload.Detail.builder()
-                        .donorId(donor.getId())
-                        .responseStatus(status.name())
-                        .build())
-                    .build()
-            );
+            com.lifelink.webhook.dto.WebhookEventPayload payload = com.lifelink.webhook.dto.WebhookEventPayload.builder()
+                .eventId(UUID.randomUUID())
+                .eventType("DONOR_RESPONDED")
+                .timestamp(LocalDateTime.now())
+                .requestId(request.getId())
+                .requestStatus(request.getStatus().name())
+                .bloodType(request.getBloodType())
+                .componentType(request.getComponentType().name())
+                .urgency(request.getUrgency().name())
+                .latitude(request.getLocation().getY())
+                .longitude(request.getLocation().getX())
+                .detail(com.lifelink.webhook.dto.WebhookEventPayload.Detail.builder()
+                    .donorId(donor.getId())
+                    .responseStatus(status.name())
+                    .build())
+                .build();
+                
+            webhookService.dispatchEvent(request.getRequester().getId(), payload);
+            requestSseService.dispatchEvent(request.getId(), payload);
         }
     }
 }
