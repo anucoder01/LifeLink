@@ -7,4 +7,5 @@ import java.util.UUID;
 
 @Repository
 public interface HospitalForwardRepository extends JpaRepository<HospitalForward, UUID> {
+    org.springframework.data.domain.Page<HospitalForward> findByBloodBankId(UUID bloodBankId, org.springframework.data.domain.Pageable pageable);
 }
