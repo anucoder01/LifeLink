@@ -31,6 +31,7 @@ public class RequestController {
 
     private final RequestService requestService;
     private final UserRepository userRepository;
+    private final RequestSseService requestSseService;
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
     /**
@@ -139,13 +140,32 @@ public class RequestController {
         return ResponseEntity.ok(PaginationUtil.fromPage(page));
     }
 
+    @Operation(summary = "Listen to real-time status updates via SSE")
+    @GetMapping(value = "/{id}/stream", produces = org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE)
+    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter streamRequestStatus(
+            Authentication authentication,
+            @PathVariable UUID id) {
+        // We verify the user has access to the request first
+        requestService.getRequestEvents(id, authentication.getName(), Pageable.ofSize(1));
+        return requestSseService.subscribe(id, authentication.getName());
+    }
+
     @Operation(summary = "Update response status of donor (EN_ROUTE, DONATED, NO_SHOW)")
     @PutMapping("/{id}/response-status")
     public ResponseEntity<Void> updateResponseStatus(
             Authentication authentication,
             @PathVariable UUID id,
-            @RequestParam RequestResponseStatus status) {
+            @RequestParam com.lifelink.request.RequestResponseStatus status) {
         requestService.updateResponseStatus(id, authentication.getName(), status);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Request a volunteer driver for transportation")
+    @PostMapping("/{id}/request-driver")
+    public ResponseEntity<Void> requestDriver(
+            Authentication authentication,
+            @PathVariable UUID id) {
+        requestService.requestDriver(id, authentication.getName());
         return ResponseEntity.noContent().build();
     }
 
