@@ -77,11 +77,13 @@ public class DonorController {
         return ResponseEntity.ok(donorService.verifyIdentity(authentication.getName(), dto));
     }
 
-    @Operation(summary = "Get full donation history")
+    @Operation(summary = "Get full donation history (paginated)")
     @GetMapping("/me/history")
-    public ResponseEntity<java.util.List<com.lifelink.donor.dto.DonationHistoryDto>> getDonationHistory(
-            Authentication authentication) {
-        return ResponseEntity.ok(donorService.getDonationHistory(authentication.getName()));
+    public ResponseEntity<com.lifelink.common.dto.PaginatedResponse<com.lifelink.donor.dto.DonationHistoryDto>> getDonationHistory(
+            Authentication authentication,
+            @org.springdoc.core.annotations.ParameterObject org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<com.lifelink.donor.dto.DonationHistoryDto> page = donorService.getDonationHistory(authentication.getName(), pageable);
+        return ResponseEntity.ok(com.lifelink.common.util.PaginationUtil.fromPage(page));
     }
 }
 
