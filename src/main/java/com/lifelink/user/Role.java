@@ -6,5 +6,6 @@ public enum Role {
     HOSPITAL_ADMIN,
     BLOOD_BANK_ADMIN,
     NGO_ADMIN,
-    SUPER_ADMIN
+    SUPER_ADMIN,
+    DRIVER
 }
