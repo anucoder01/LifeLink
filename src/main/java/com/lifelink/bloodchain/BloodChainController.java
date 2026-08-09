@@ -29,10 +29,13 @@ public class BloodChainController {
      * GET /api/v1/donors/me/vouches
      * Returns the authenticated donor's list of trusted contacts (phone numbers masked).
      */
-    @Operation(summary = "List my trusted backup donor contacts")
+    @Operation(summary = "List my trusted backup donor contacts (paginated)")
     @GetMapping("/api/v1/donors/me/vouches")
-    public ResponseEntity<List<VouchDto>> getMyVouches(Authentication authentication) {
-        return ResponseEntity.ok(bloodChainService.getMyVouches(authentication.getName()));
+    public ResponseEntity<com.lifelink.common.dto.PaginatedResponse<VouchDto>> getMyVouches(
+            Authentication authentication,
+            @org.springdoc.core.annotations.ParameterObject org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<VouchDto> page = bloodChainService.getMyVouches(authentication.getName(), pageable);
+        return ResponseEntity.ok(com.lifelink.common.util.PaginationUtil.fromPage(page));
     }
 
     /**
