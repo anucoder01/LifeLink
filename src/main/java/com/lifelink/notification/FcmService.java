@@ -37,6 +37,14 @@ public class FcmService {
         }
     }
 
+    public void sendNotificationToDriver(com.lifelink.driver.Driver driver, String title, String body, String referenceId) {
+        if (driver.getUser().getFcmToken() == null) {
+            log.warn("Cannot send FCM to driver {}: No token", driver.getId());
+            return;
+        }
+        sendPush(driver.getUser().getFcmToken(), title, body, true);
+    }
+
     public void sendNotification(String fcmToken, String title, String body, boolean isCritical) {
         // Backwards compatibility for callers without Donor context
         sendPush(fcmToken, title, body, isCritical);
