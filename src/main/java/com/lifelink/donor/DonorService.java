@@ -106,12 +106,11 @@ public class DonorService {
     }
 
     @Transactional(readOnly = true)
-    public java.util.List<DonationHistoryDto> getDonationHistory(String phone) {
+    public org.springframework.data.domain.Page<DonationHistoryDto> getDonationHistory(String phone, org.springframework.data.domain.Pageable pageable) {
         User user = findUserByPhone(phone);
         Donor donor = findDonorByUser(user);
         
-        return requestResponseRepository.findByDonorIdAndStatus(donor.getId(), RequestResponseStatus.DONATED)
-                .stream()
+        return requestResponseRepository.findByDonorIdAndStatus(donor.getId(), RequestResponseStatus.DONATED, pageable)
                 .map(response -> {
                     DonationHistoryDto dto = new DonationHistoryDto();
                     dto.setRequestId(response.getRequest().getId().toString());
@@ -119,8 +118,7 @@ public class DonorService {
                     dto.setComponentType(response.getRequest().getComponentType().name());
                     dto.setDonatedAt(response.getRespondedAt()); // We might want a 'donatedAt' instead, but respondedAt works for now
                     return dto;
-                })
-                .collect(java.util.stream.Collectors.toList());
+                });
     }
 
     // -------------------------------------------------------------------------
