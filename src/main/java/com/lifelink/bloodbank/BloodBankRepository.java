@@ -12,6 +12,8 @@ import java.util.UUID;
 @Repository
 public interface BloodBankRepository extends JpaRepository<BloodBank, UUID> {
 
+    java.util.Optional<BloodBank> findByUserId(UUID userId);
+
     @Query(value = """
         SELECT b.* FROM blood_banks b
         WHERE b.verified = true
