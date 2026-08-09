@@ -49,12 +49,10 @@ public class BloodChainService {
      * Returns all vouched contacts for the authenticated donor (phone numbers masked).
      */
     @Transactional(readOnly = true)
-    public List<VouchDto> getMyVouches(String phone) {
+    public org.springframework.data.domain.Page<VouchDto> getMyVouches(String phone, org.springframework.data.domain.Pageable pageable) {
         Donor donor = findDonorByPhone(phone);
-        return vouchRepository.findAllByDonorId(donor.getId())
-                .stream()
-                .map(this::mapToVouchDto)
-                .toList();
+        return vouchRepository.findAllByDonorId(donor.getId(), pageable)
+                .map(this::mapToVouchDto);
     }
 
     /**
