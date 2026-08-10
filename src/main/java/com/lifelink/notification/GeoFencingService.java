@@ -52,8 +52,8 @@ public class GeoFencingService {
     }
 
     private boolean hasRecentGeoFenceAlert(java.util.UUID userId, java.util.UUID requestId) {
-        // Simplified check: if an AppNotification exists for this request with type GEO_FENCE
-        return appNotificationRepository.existsByDonorUserIdAndRelatedRequestIdAndType(userId, requestId, "GEO_FENCE");
+        // Simplified check: if an AppNotification exists for this request
+        return appNotificationRepository.existsByDonorUserIdAndRelatedEntityId(userId, requestId.toString());
     }
 
     private void sendGeoFenceAlert(Donor donor, EmergencyRequest request) {
@@ -61,11 +61,10 @@ public class GeoFencingService {
         String body = "You are in an area with a critical emergency/disaster. Blood and volunteers are urgently needed.";
         
         AppNotification notif = new AppNotification();
-        notif.setDonorUser(donor.getUser());
+        notif.setDonor(donor);
         notif.setTitle(title);
-        notif.setMessage(body);
-        notif.setType("GEO_FENCE");
-        notif.setRelatedRequestId(request.getId());
+        notif.setBody(body);
+        notif.setRelatedEntityId(request.getId().toString());
         appNotificationRepository.save(notif);
 
         fcmService.sendNotificationToDonor(donor, title, body, true, request.getId().toString());
