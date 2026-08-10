@@ -10,5 +10,5 @@ import java.util.UUID;
 @Repository
 public interface AppNotificationRepository extends JpaRepository<AppNotification, UUID> {
     Page<AppNotification> findByDonorUserId(UUID userId, Pageable pageable);
-    boolean existsByDonorUserIdAndRelatedRequestIdAndType(UUID userId, UUID relatedRequestId, String type);
+    boolean existsByDonorUserIdAndRelatedEntityId(UUID userId, String relatedEntityId);
 }
