@@ -53,12 +53,12 @@ public class MatchingEngineTest {
         donor1 = new Donor();
         donor1.setBloodType("O+");
         // Ensure donor1 is eligible (no recent donations)
-        donor1.setLastDonationWholeBlood(LocalDateTime.now().minusDays(100));
+        donor1.setLastDonationDate(java.time.LocalDate.now().minusDays(100));
         
         donor2 = new Donor();
         donor2.setBloodType("A+");
         // Ensure donor2 is NOT eligible (donated whole blood yesterday)
-        donor2.setLastDonationWholeBlood(LocalDateTime.now().minusDays(1));
+        donor2.setLastDonationDate(java.time.LocalDate.now().minusDays(1));
     }
 
     @Test
