@@ -1,6 +1,7 @@
 -- Blood Banks table
 CREATE TABLE IF NOT EXISTS blood_banks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
     name VARCHAR(150) NOT NULL,
     location geography(Point, 4326) NOT NULL,
     verified BOOLEAN DEFAULT FALSE,
@@ -14,6 +15,7 @@ CREATE TABLE IF NOT EXISTS blood_banks (
 -- NGOs table
 CREATE TABLE IF NOT EXISTS ngos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
     name VARCHAR(150) NOT NULL,
     location geography(Point, 4326),
     verified BOOLEAN DEFAULT FALSE,
