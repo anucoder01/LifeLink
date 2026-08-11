@@ -117,7 +117,7 @@ export default function Dashboard() {
               O+
             </div>
             <div>
-              <h4 style={{ margin: 0, fontSize: '1.25rem' }}>John Doe</h4>
+              <h4 style={{ margin: 0, fontSize: '1.25rem' }}>{localStorage.getItem('donorName') || 'John Doe'}</h4>
               <p style={{ margin: 0, color: 'var(--color-success)', fontWeight: 'bold', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                 <CheckCircle2 size={16} /> Eligible to donate
               </p>

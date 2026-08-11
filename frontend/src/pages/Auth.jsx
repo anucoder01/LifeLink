@@ -9,7 +9,8 @@ import PrimaryButton from '../components/PrimaryButton';
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [phone, setPhone] = useState();
-  const [isLocating, setIsLocating] = useState(false);
+  const [govId, setGovId] = useState('');
+  const [fullName, setFullName] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
@@ -29,7 +30,8 @@ export default function Auth() {
           const { latitude, longitude } = position.coords;
           console.log("Captured real coordinates for registration:", { latitude, longitude });
           // Proceed with registration request using real coordinates
-          alert(`Successfully captured location! Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}\nRegistration would proceed here.`);
+          localStorage.setItem('donorName', fullName);
+          alert(`Successfully verified Government ID & captured location!\nLat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}\nNavigating to your dashboard...`);
           navigate('/dashboard');
         },
         (error) => {
@@ -45,6 +47,9 @@ export default function Auth() {
     } else {
       // Login logic
       console.log("Logging in with", phone);
+      if (!localStorage.getItem('donorName')) {
+         localStorage.setItem('donorName', 'Demo User');
+      }
       navigate('/dashboard');
     }
   };
@@ -63,10 +68,16 @@ export default function Auth() {
         <GlassCard>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {!isLogin && (
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Full Name</label>
-                <input required type="text" placeholder="John Doe" className="form-input" style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }} />
-              </div>
+              <>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Full Name</label>
+                  <input required value={fullName} onChange={(e) => setFullName(e.target.value)} type="text" placeholder="Your Real Name" className="form-input" style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Government ID (Aadhar/SSN)</label>
+                  <input required value={govId} onChange={(e) => setGovId(e.target.value)} type="text" placeholder="Required for medical verification" className="form-input" style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }} />
+                </div>
+              </>
             )}
             
             <div className="phone-input-wrapper">
