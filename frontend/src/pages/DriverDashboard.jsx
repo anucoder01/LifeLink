@@ -31,7 +31,11 @@ export default function DriverDashboard() {
   ]);
 
   const handleAction = (id, action) => {
-    alert(`Task ${id}: ${action} successful!`);
+    if (action === 'ACCEPTED') {
+      setTasks(tasks.map(t => t.id === id ? { ...t, status: 'IN_PROGRESS' } : t));
+    } else if (action === 'COMPLETED') {
+      setTasks(tasks.filter(t => t.id !== id));
+    }
   };
 
   const handleLogin = (e) => {
