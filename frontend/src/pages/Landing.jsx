@@ -22,7 +22,7 @@ const Landing = () => {
               I Need Blood Now
             </PrimaryButton>
           </Link>
-          <Link to="/auth">
+          <Link to="/auth" state={{ isLogin: false }}>
             <PrimaryButton variant="secondary" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>
               Register as Donor
             </PrimaryButton>
