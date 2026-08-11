@@ -39,6 +39,10 @@ public class RequestServiceTest {
     @Mock private BloodChainService bloodChainService;
     @Mock private RequestEventRepository requestEventRepository;
     @Mock private WebhookService webhookService;
+    @Mock private com.lifelink.bloodbank.BloodBankRepository bloodBankRepository;
+    @Mock private RequestSseService requestSseService;
+    @Mock private com.lifelink.institution.HospitalForwardRepository hospitalForwardRepository;
+    @Mock private com.lifelink.driver.DriverRepository driverRepository;
 
     @InjectMocks
     private RequestService requestService;
@@ -57,6 +61,11 @@ public class RequestServiceTest {
         request.setStatus(RequestStatus.PENDING);
         request.setCurrentRadiusKm(5);
         request.setExpiresAt(LocalDateTime.now().plusHours(24));
+        request.setComponentType(ComponentType.WHOLE_BLOOD);
+        request.setUrgency(Urgency.HIGH);
+        request.setBloodType("O+");
+        org.locationtech.jts.geom.GeometryFactory gf = new org.locationtech.jts.geom.GeometryFactory();
+        request.setLocation(gf.createPoint(new org.locationtech.jts.geom.Coordinate(77.5946, 12.9716)));
     }
 
     @Test
@@ -92,10 +101,11 @@ public class RequestServiceTest {
 
     @Test
     void testAutoExpandRadius() {
+        org.springframework.test.util.ReflectionTestUtils.setField(requestService, "maxRadiusKm", 50);
         request.setCurrentRadiusKm(5);
         when(requestRepository.findByStatus(RequestStatus.PENDING))
                 .thenReturn(new ArrayList<>(List.of(request)));
-        when(matchingEngine.findEligibleDonors(request, 15)).thenReturn(List.of());
+        when(matchingEngine.findEligibleDonors(eq(request), anyInt())).thenReturn(List.of());
 
         requestService.autoExpandRadius();
 
