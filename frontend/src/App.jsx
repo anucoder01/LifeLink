@@ -4,6 +4,8 @@ import Landing from './pages/Landing';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import Requests from './pages/Requests';
+import MyRequests from './pages/MyRequests';
+import HospitalAdmin from './pages/HospitalAdmin';
 import Navbar from './components/Navbar';
 import './App.css';
 
@@ -17,6 +19,8 @@ function App() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/requests" element={<Requests />} />
+          <Route path="/my-requests" element={<MyRequests />} />
+          <Route path="/admin" element={<HospitalAdmin />} />
         </Routes>
       </div>
     </Router>
