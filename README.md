@@ -19,6 +19,13 @@ LifeLink replaces manual WhatsApp-group blood requests with a reliable, privacy-
 - ⏰ **Scheduled Jobs** — auto radius-expansion every 5 min, auto-expiry check every 60s
 - 🏥 **Hospital & Blood Inventory** — data model for hospital blood stock tracking
 
+### Frontend Application
+- ⚛️ **Modern React Framework** — lightning-fast Vite + React stack
+- 🎨 **Glassmorphism UI** — state-of-the-art vanilla CSS system without relying on Tailwind
+- 🗺️ **Real-time Geolocation** — integrates browser HTML5 Geolocation API to auto-fetch exact GPS coordinates for donors and SOS requesters
+- ☎️ **International Dialing** — `react-phone-number-input` integration for global phone number support with country codes
+- 🔒 **Graceful Degradation** — privacy-first fallback popups if users disable OS-level location services
+
 ### Feature A — Blood Chain 🔗 *(Social Vouching Network)*
 > *When no registered donors are found within 30km, the Blood Chain activates.*
 
