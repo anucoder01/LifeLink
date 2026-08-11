@@ -153,6 +153,66 @@ export default function Dashboard() {
           </PrimaryButton>
         </GlassCard>
 
+        {/* Recent Activity Feed */}
+        <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '1rem', gridColumn: '1 / -1' }}>
+          <h3 style={{ margin: '0 0 0.5rem 0' }}>Recent Activity</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem' }}>
+              <div style={{ padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '50%', color: '#10b981' }}>
+                <CheckCircle2 size={20} />
+              </div>
+              <div>
+                <p style={{ margin: '0 0 0.25rem 0', fontWeight: '500' }}>Donation Successful</p>
+                <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>You completed a whole blood donation at City General Hospital.</p>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', marginTop: '0.25rem', display: 'block' }}>Jan 10, 2026</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem' }}>
+              <div style={{ padding: '0.5rem', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '50%', color: 'var(--color-warning)' }}>
+                <Shield size={20} />
+              </div>
+              <div>
+                <p style={{ margin: '0 0 0.25rem 0', fontWeight: '500' }}>Earned Bronze Donor Badge</p>
+                <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Awarded for completing 3 lifetime donations!</p>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', marginTop: '0.25rem', display: 'block' }}>Jan 11, 2026</span>
+              </div>
+            </div>
+
+          </div>
+        </GlassCard>
+
+        {/* Nearby Active Emergencies */}
+        <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '1rem', gridColumn: '1 / -1', background: 'rgba(220,38,38,0.02)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Activity color="var(--color-primary)" /> Local Emergency Radar
+            </h3>
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 'bold' }}>Live Data</span>
+          </div>
+          
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ flex: '1 1 250px', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                <span style={{ background: 'var(--color-primary)', color: 'white', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>O- URGENT</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>2.4 km away</span>
+              </div>
+              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem' }}>Apollo Hospital ER</p>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Awaiting compatible donors. Radius expanding...</p>
+            </div>
+            
+            <div style={{ flex: '1 1 250px', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                <span style={{ background: 'var(--color-warning)', color: 'white', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>A+ CRITICAL</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>4.1 km away</span>
+              </div>
+              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem' }}>City General Trauma Center</p>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Matched donors notified via FCM.</p>
+            </div>
+          </div>
+        </GlassCard>
+
         {/* Blood Chain Card */}
         <GlassCard style={{ gridColumn: '1 / -1' }}>
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
