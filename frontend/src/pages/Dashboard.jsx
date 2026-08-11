@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, MapPin, Activity, Link as LinkIcon, Shield, CheckCircle2, Phone, Heart, Trophy, Calendar, Tent } from 'lucide-react';
+import { User, MapPin, Activity, Link as LinkIcon, Shield, CheckCircle2, Phone, Heart, Trophy, Calendar, Tent, Navigation, PhoneCall } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import PrimaryButton from '../components/PrimaryButton';
 import PhoneInput from 'react-phone-number-input';
@@ -81,7 +81,45 @@ export default function Dashboard() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
         
-        {/* Impact Stats */}
+        {/* Active Mission / Driver Tracking (Demo) */}
+        <GlassCard style={{ gridColumn: '1 / -1', background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ padding: '0.75rem', background: 'var(--color-primary)', borderRadius: '50%', color: 'white', animation: 'pulse 2s infinite' }}>
+                <Activity size={24} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Active Emergency Response</h3>
+                <p style={{ margin: 0, color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
+                   Volunteer Driver <strong>Rajesh K.</strong> is en route to pick you up.
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <PrimaryButton 
+                onClick={() => alert('Opening Live Map Tracking... (ETA: 4 mins)')}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>
+                <Navigation size={18} /> Track Driver
+              </PrimaryButton>
+              <PrimaryButton 
+                onClick={() => alert('Initiating secure, masked call to Driver (Rajesh K.)...')}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <PhoneCall size={18} /> Contact Driver
+              </PrimaryButton>
+            </div>
+          </div>
+          
+          <div style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden', marginTop: '1rem' }}>
+            <div style={{ width: '60%', height: '100%', background: 'var(--color-success)', borderRadius: '4px' }}></div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
+            <span>Driver Dispatched</span>
+            <span style={{ color: 'var(--color-success)', fontWeight: 'bold' }}>Arriving in 4 mins</span>
+            <span>Hospital Drop-off</span>
+          </div>
+        </GlassCard>
+
+        {/* Impact Stats Card (Gamification) */}
         <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '1rem', gridColumn: '1 / -1', background: 'linear-gradient(135deg, rgba(220,38,38,0.1) 0%, rgba(0,0,0,0.4) 100%)', border: '1px solid rgba(220,38,38,0.2)' }}>
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 0.5rem 0' }}>
             <Trophy color="var(--color-primary)" />
