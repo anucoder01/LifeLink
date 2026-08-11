@@ -19,12 +19,16 @@ LifeLink replaces manual WhatsApp-group blood requests with a reliable, privacy-
 - ⏰ **Scheduled Jobs** — auto radius-expansion every 5 min, auto-expiry check every 60s
 - 🏥 **Hospital & Blood Inventory** — data model for hospital blood stock tracking
 
-### Frontend Application
-- ⚛️ **Modern React Framework** — lightning-fast Vite + React stack
+### Frontend Application (Vite + React)
+- ⚛️ **Modern React Framework** — lightning-fast Vite + React stack with 0-config HMR
 - 🎨 **Glassmorphism UI** — state-of-the-art vanilla CSS system without relying on Tailwind
-- 🗺️ **Real-time Geolocation** — integrates browser HTML5 Geolocation API to auto-fetch exact GPS coordinates for donors and SOS requesters
-- ☎️ **International Dialing** — `react-phone-number-input` integration for global phone number support with country codes
-- 🔒 **Graceful Degradation** — privacy-first fallback popups if users disable OS-level location services
+- 🗺️ **Real-time Geolocation** — integrates browser HTML5 Geolocation API to auto-fetch exact GPS coordinates
+- ☎️ **International Dialing** — `react-phone-number-input` integration for global phone number support
+- 🚑 **My SOS Requests** — Track live donor responses, request volunteer drivers, and close requests
+- 🏥 **Hospital Admin Portal** — Manage realtime webhooks and visualize blood bank inventory
+- 🚙 **Driver Dashboard** — Volunteer logistics platform for blood bag delivery and donor transport
+- 🤝 **NGO Partner Portal** — Analytics dashboard for NGOs to track campaign impact and donor turnout
+- 🏕️ **Blood Donation Camps** — Interface to discover and register for local blood donation drives
 
 ### Feature A — Blood Chain 🔗 *(Social Vouching Network)*
 > *When no registered donors are found within 30km, the Blood Chain activates.*
