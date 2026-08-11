@@ -1,12 +1,29 @@
-import React, { useState } from 'react';
-import { Truck, Navigation, CheckCircle2, Clock, Map, Lock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Truck, Navigation, CheckCircle2, Clock, Map, Lock, Thermometer, Activity, Zap } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import PrimaryButton from '../components/PrimaryButton';
 
 export default function DriverDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
+  const [temp, setTemp] = useState(4.2);
   
+  // Simulate temperature fluctuations for the Cold Chain Monitor
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const interval = setInterval(() => {
+      setTemp(prev => {
+        const fluctuation = (Math.random() - 0.5) * 0.4;
+        const newTemp = prev + fluctuation;
+        // Keep it between 3.5 and 7.5 to simulate a slowly failing cooler that occasionally spikes
+        if (newTemp > 7.5) return 7.5;
+        if (newTemp < 3.5) return 3.5;
+        return newTemp;
+      });
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
   const [tasks, setTasks] = useState([
     {
       id: 1,
@@ -138,14 +155,49 @@ export default function DriverDashboard() {
                 </div>
               </div>
 
+              {task.type === 'BLOOD_DELIVERY' && task.status === 'IN_PROGRESS' && (
+                <div style={{ 
+                  background: temp > 6.0 ? 'rgba(220, 38, 38, 0.1)' : 'rgba(16, 185, 129, 0.1)', 
+                  border: temp > 6.0 ? '1px solid var(--color-primary)' : '1px solid var(--color-success)',
+                  padding: '1rem', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  transition: 'all 0.3s ease'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Thermometer size={20} color={temp > 6.0 ? 'var(--color-primary)' : 'var(--color-success)'} />
+                    <div>
+                      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>COLD CHAIN STATUS</p>
+                      <p style={{ margin: 0, fontWeight: 'bold', color: temp > 6.0 ? 'var(--color-primary)' : 'white' }}>
+                        {temp.toFixed(1)}°C {temp > 6.0 ? '(WARNING)' : '(STABLE)'}
+                      </p>
+                    </div>
+                  </div>
+                  {temp > 6.0 && (
+                    <div style={{ animation: 'pulse 1s infinite' }}>
+                      <Activity color="var(--color-primary)" size={24} />
+                    </div>
+                  )}
+                </div>
+              )}
+
               {task.status === 'AVAILABLE' ? (
                 <PrimaryButton onClick={() => handleAction(task.id, 'ACCEPTED')} style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                   <Navigation size={18} /> Accept Ride
                 </PrimaryButton>
               ) : (
-                <PrimaryButton onClick={() => handleAction(task.id, 'COMPLETED')} style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', background: 'var(--color-success)', boxShadow: '0 4px 14px rgba(16,185,129,0.4)' }}>
-                  <CheckCircle2 size={18} /> Complete Trip
-                </PrimaryButton>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <PrimaryButton onClick={() => handleAction(task.id, 'COMPLETED')} style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', background: 'var(--color-success)', boxShadow: '0 4px 14px rgba(16,185,129,0.4)' }}>
+                    <CheckCircle2 size={18} /> Complete Trip
+                  </PrimaryButton>
+                  <PrimaryButton 
+                    variant="secondary"
+                    onClick={() => {
+                      alert('Rerouting... Emergency Drone Dispatched to your location for handoff!');
+                      handleAction(task.id, 'COMPLETED');
+                    }} 
+                    style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                    <Zap size={18} /> Stuck in traffic? Dispatch Drone Handoff
+                  </PrimaryButton>
+                </div>
               )}
             </GlassCard>
           ))}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, Link as LinkIcon, Database, CheckCircle2, Plus, Lock } from 'lucide-react';
+import { Building2, Link as LinkIcon, Database, CheckCircle2, Plus, Lock, Ambulance, AlertTriangle, TrendingDown } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import PrimaryButton from '../components/PrimaryButton';
 
@@ -9,6 +9,10 @@ export default function HospitalAdmin() {
   
   const [webhooks, setWebhooks] = useState([
     { id: 1, url: 'https://api.citygeneral.com/lifelink/webhooks', eventType: 'DONOR_MATCHED', status: 'ACTIVE' },
+  ]);
+
+  const [traumaAlerts, setTraumaAlerts] = useState([
+    { id: 101, unit: 'Medic 42', type: 'MVA (Multi-Vehicle Accident)', eta: '8 mins', bloodNeeded: '4 Units O-', status: 'INBOUND' }
   ]);
 
   const handleLogin = (e) => {
@@ -66,9 +70,28 @@ export default function HospitalAdmin() {
         </div>
       </div>
 
+      {/* Trauma Code Red Feed */}
+      <GlassCard style={{ marginBottom: '2rem', borderLeft: '4px solid var(--color-primary)' }}>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 1rem 0', color: 'var(--color-primary)' }}>
+          <Ambulance size={24} /> Field Paramedic Feed (Trauma Code Red)
+        </h3>
+        {traumaAlerts.map(alert => (
+          <div key={alert.id} style={{ background: 'rgba(220, 38, 38, 0.1)', border: '1px solid var(--color-primary)', borderRadius: '8px', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', animation: 'pulse 2s infinite' }}>
+            <div>
+              <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--color-primary)' }}>{alert.unit}: {alert.type}</span>
+              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem' }}>ETA: <strong>{alert.eta}</strong> • Prepare: <strong>{alert.bloodNeeded}</strong></p>
+            </div>
+            <PrimaryButton onClick={() => setTraumaAlerts([])}>Acknowledge & Prep</PrimaryButton>
+          </div>
+        ))}
+        {traumaAlerts.length === 0 && (
+          <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>No active inbound trauma alerts.</p>
+        )}
+      </GlassCard>
+
       <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 400px' }}>
-          <GlassCard style={{ height: '100%' }}>
+        <div style={{ flex: '1 1 400px', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <GlassCard style={{ flex: 1 }}>
             <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', marginTop: 0 }}>
               <LinkIcon color="var(--color-primary)" /> Webhook Integrations
             </h3>
@@ -128,6 +151,22 @@ export default function HospitalAdmin() {
                   </div>
                 );
               })}
+            </div>
+          </GlassCard>
+          
+          {/* Predictive Shortage AI */}
+          <GlassCard style={{ flex: 1, borderTop: '4px solid var(--color-warning)' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', marginTop: 0, color: 'var(--color-warning)' }}>
+              <TrendingDown size={20} /> Predictive Shortage AI
+            </h3>
+            <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--color-warning)' }}>
+              <p style={{ margin: '0 0 0.5rem 0', fontWeight: 'bold' }}><AlertTriangle size={16} style={{ verticalAlign: 'middle', marginRight: '0.25rem' }} /> Critical Trajectory Detected</p>
+              <p style={{ margin: '0 0 1rem 0', fontSize: '0.875rem' }}>
+                Based on current usage rates and scheduled surgeries, O- inventory will be completely depleted within <strong>14 hours</strong>.
+              </p>
+              <PrimaryButton onClick={() => alert('Preemptive SOS Broadcast sent to donors within 10km!')} style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                Auto-Broadcast Preemptive SOS
+              </PrimaryButton>
             </div>
           </GlassCard>
         </div>
