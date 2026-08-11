@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, Clock, MapPin, Share2 } from 'lucide-react';
+import { AlertCircle, Clock, MapPin, Share2, Car } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import PrimaryButton from '../components/PrimaryButton';
 
@@ -95,19 +95,31 @@ export default function Requests() {
               </div>
             </div>
             
-            <div style={{ display: 'flex', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem', flexWrap: 'wrap' }}>
               <PrimaryButton 
                 onClick={() => {
                   alert('You have accepted this request! Navigating to donor coordination...');
                   navigate('/dashboard');
                 }} 
-                style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                style={{ flex: '1 1 150px', display: 'flex', justifyContent: 'center' }}>
                 Accept Request
               </PrimaryButton>
+              
+              <PrimaryButton 
+                variant="secondary"
+                onClick={() => {
+                  alert('Request accepted & driver requested! A volunteer driver will contact you shortly.');
+                  navigate('/dashboard');
+                }} 
+                style={{ flex: '1 1 200px', display: 'flex', justifyContent: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                <Car size={18} /> Accept & Request Driver
+              </PrimaryButton>
+
               <button 
                 onClick={() => alert('Request declined. We will notify other nearby donors.')}
                 style={{ 
-                flex: 1, 
+                flex: '0 1 auto',
+                padding: '0 1rem', 
                 background: 'rgba(255,255,255,0.05)', 
                 border: '1px solid var(--color-border)', 
                 color: 'var(--color-text)', 
@@ -117,18 +129,6 @@ export default function Requests() {
                 transition: 'all 0.2s ease'
               }}>
                 Decline
-              </button>
-              <button style={{ 
-                width: '48px', 
-                background: 'rgba(255,255,255,0.05)', 
-                border: '1px solid var(--color-border)', 
-                color: 'var(--color-text)', 
-                borderRadius: '8px', 
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}>
-                <Share2 size={20} />
               </button>
             </div>
           </GlassCard>
