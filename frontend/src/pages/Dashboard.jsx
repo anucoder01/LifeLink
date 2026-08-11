@@ -1,12 +1,20 @@
 import React, { useState } from 'react';
-import { User, MapPin, Activity, Link as LinkIcon, Edit2, Shield, Search } from 'lucide-react';
+import { User, MapPin, Activity, Link as LinkIcon, Shield, CheckCircle2, Phone } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import PrimaryButton from '../components/PrimaryButton';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 export default function Dashboard() {
   const [isActive, setIsActive] = useState(true);
   const [locationName, setLocationName] = useState('Bengaluru, KA, India');
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
+  
+  const [vouchedContacts, setVouchedContacts] = useState([
+    { id: 1, name: 'Jane Doe (Sister)', phone: '+1 (555) 123-4567' }
+  ]);
+  const [newContactPhone, setNewContactPhone] = useState();
+  const [newContactName, setNewContactName] = useState('');
 
   const handleUpdateLocation = () => {
     setIsUpdatingLocation(true);
@@ -35,6 +43,21 @@ export default function Dashboard() {
     );
   };
 
+  const handleAddContact = (e) => {
+    e.preventDefault();
+    if (vouchedContacts.length >= 3) {
+      alert("You can only have up to 3 contacts.");
+      return;
+    }
+    setVouchedContacts([...vouchedContacts, { id: Date.now(), name: newContactName, phone: newContactPhone }]);
+    setNewContactName('');
+    setNewContactPhone('');
+  };
+
+  const removeContact = (id) => {
+    setVouchedContacts(vouchedContacts.filter(c => c.id !== id));
+  };
+
   return (
     <div className="container animate-fade-in" style={{ padding: '2rem 1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -45,6 +68,49 @@ export default function Dashboard() {
           </h2>
           <p style={{ color: 'var(--color-text-muted)' }}>Manage your profile and emergency readiness.</p>
         </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <span style={{ fontSize: '0.875rem', color: isActive ? 'var(--color-success)' : 'var(--color-text-muted)' }}>
+            {isActive ? 'Available for Emergencies' : 'Currently Unavailable'}
+          </span>
+          <PrimaryButton onClick={() => setIsActive(!isActive)} variant={isActive ? 'secondary' : 'primary'} style={{ padding: '0.5rem 1rem' }}>
+            {isActive ? 'Go Offline' : 'Go Online'}
+          </PrimaryButton>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+        
+        {/* Health Profile */}
+        <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--color-primary)' }}>
+            <Activity size={24} />
+            <h3 style={{ margin: 0 }}>Health Profile</h3>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1rem' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold' }}>
+              O+
+            </div>
+            <div>
+              <h4 style={{ margin: 0, fontSize: '1.25rem' }}>John Doe</h4>
+              <p style={{ margin: 0, color: 'var(--color-success)', fontWeight: 'bold', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <CheckCircle2 size={16} /> Eligible to donate
+              </p>
+            </div>
+          </div>
+          <div>
+            <p style={{ margin: '0 0 0.25rem 0', fontWeight: 'bold' }}>Last Donation</p>
+            <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>Jan 10, 2026 (Whole Blood)</p>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '99px', height: '8px', overflow: 'hidden' }}>
+            <div style={{ background: 'var(--color-primary)', width: '100%', height: '100%' }}></div>
+          </div>
+          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textAlign: 'right', margin: 0 }}>
+            Cooldown complete.
+          </p>
+        </GlassCard>
+
+        {/* Location Card */}
         <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--color-primary)' }}>
             <MapPin size={24} />
@@ -52,130 +118,79 @@ export default function Dashboard() {
           </div>
           <div>
             <p style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: '0 0 0.5rem 0' }}>{locationName}</p>
-            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>Used for matching you with nearby SOS alerts.</p>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>Your location is used for geo-targeted emergency matching. We only track your last updated location.</p>
           </div>
-          <button 
+          <PrimaryButton 
             disabled={isUpdatingLocation}
             onClick={handleUpdateLocation}
-            style={{ 
-              marginTop: 'auto', 
-              background: 'rgba(255,255,255,0.05)', 
-              border: '1px solid var(--color-border)', 
-              color: 'var(--color-text)', 
-              padding: '0.5rem', 
-              borderRadius: '8px', 
-              fontWeight: '600', 
-              cursor: isUpdatingLocation ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
+            style={{ marginTop: 'auto', width: '100%', display: 'flex', justifyContent: 'center' }}>
             {isUpdatingLocation ? 'Locating...' : 'Update Location Now'}
-          </button>
-        </GlassCard>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ fontSize: '0.875rem', color: isActive ? 'var(--color-success)' : 'var(--color-text-muted)' }}>
-            {isActive ? 'Available for Emergencies' : 'Currently Unavailable'}
-          </span>
-          <button 
-            onClick={() => setIsActive(!isActive)}
-            style={{
-              background: isActive ? 'var(--color-success)' : 'transparent',
-              border: `1px solid ${isActive ? 'var(--color-success)' : 'var(--color-border)'}`,
-              color: 'white',
-              padding: '0.5rem 1rem',
-              borderRadius: 'var(--radius-full)',
-              cursor: 'pointer',
-              fontWeight: '600',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            {isActive ? 'Active' : 'Inactive'}
-          </button>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-        {/* Profile Card */}
-        <GlassCard>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity size={20} /> My Profile</h3>
-            <button style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer' }}><Edit2 size={16} /></button>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem' }}>
-            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold' }}>
-              O+
-            </div>
-            <div>
-              <h4 style={{ margin: 0, fontSize: '1.25rem' }}>John Doe</h4>
-              <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>+1 (555) 123-4567</p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--color-text-muted)' }}>Total Donations</span>
-              <span style={{ fontWeight: '600' }}>4</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--color-text-muted)' }}>Last Donation</span>
-              <span style={{ fontWeight: '600' }}>Oct 12, 2025</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--color-text-muted)' }}>Eligibility</span>
-              <span style={{ color: 'var(--color-success)', fontWeight: '600' }}>Eligible (Whole Blood)</span>
-            </div>
-          </div>
-        </GlassCard>
-
-        {/* Location Card */}
-        <GlassCard>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-            <MapPin size={20} /> Current Location
-          </h3>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
-            Your location is used for geo-targeted emergency matching. We only track your last updated location.
-          </p>
-          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', border: '1px solid var(--color-border)' }}>
-            <p style={{ margin: 0, fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-               📍 Bengaluru, KA, India
-            </p>
-            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>Updated 2 hours ago</p>
-          </div>
-          <PrimaryButton style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-            <MapPin size={18} /> Update Location Now
           </PrimaryButton>
         </GlassCard>
 
         {/* Blood Chain Card */}
-        <GlassCard>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-            <LinkIcon size={20} /> Blood Chain Contacts
+        <GlassCard style={{ gridColumn: '1 / -1' }}>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <LinkIcon color="var(--color-primary)" size={24} /> Blood Chain Network 🔗
           </h3>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
             Nominate up to 3 trusted contacts. If we can't find donors in a 30km radius, we'll send them a one-time SMS invite to register and help.
           </p>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-            {[1, 2, 3].map((num, i) => (
-              <div key={num} style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px dashed var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                {i === 0 ? (
-                  <>
-                    <div>
-                      <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: '500' }}>Jane Smith</p>
-                      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>+1 (555) 987-6543</p>
+          <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+            {/* Contact List */}
+            <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {[0, 1, 2].map((idx) => {
+                const contact = vouchedContacts[idx];
+                if (contact) {
+                  return (
+                    <div key={contact.id} style={{ padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <p style={{ margin: 0, fontSize: '1rem', fontWeight: 'bold' }}>{contact.name}</p>
+                        <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <Phone size={14} /> {contact.phone}
+                        </p>
+                      </div>
+                      <PrimaryButton variant="danger" onClick={() => removeContact(contact.id)} style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}>Remove</PrimaryButton>
                     </div>
-                    <button style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer' }}>Remove</button>
-                  </>
-                ) : (
-                  <span style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>+ Add Contact {num}</span>
-                )}
-              </div>
-            ))}
+                  );
+                } else {
+                  return (
+                    <div key={`empty-${idx}`} style={{ padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px dashed var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>+ Empty Vouch Slot</span>
+                    </div>
+                  );
+                }
+              })}
+              <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.5rem' }}>
+                <Shield size={12} /> Contact numbers are encrypted and masked.
+              </p>
+            </div>
+
+            {/* Add Contact Form */}
+            <div style={{ flex: '1 1 300px', background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+              <h4 style={{ margin: '0 0 1rem 0' }}>Add a Trusted Contact</h4>
+              <form onSubmit={handleAddContact} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.75rem' }}>Contact Name (e.g. Brother)</label>
+                  <input required value={newContactName} onChange={(e) => setNewContactName(e.target.value)} type="text" placeholder="John Smith" className="form-input" style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'transparent', color: 'white' }} />
+                </div>
+                <div className="phone-input-wrapper">
+                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.75rem' }}>Phone Number</label>
+                  <PhoneInput
+                    international
+                    defaultCountry="IN"
+                    value={newContactPhone}
+                    onChange={setNewContactPhone}
+                    required
+                    className="form-input custom-phone"
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'transparent', color: 'white' }}
+                  />
+                </div>
+                <PrimaryButton disabled={vouchedContacts.length >= 3} type="submit" style={{ marginTop: '0.5rem' }}>+ Vouch for Contact</PrimaryButton>
+              </form>
+            </div>
           </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <Shield size={12} /> Contact numbers are encrypted and masked.
-          </p>
         </GlassCard>
       </div>
     </div>
