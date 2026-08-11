@@ -53,7 +53,7 @@ It replaces manual broadcasting with a reliable, privacy-first matching system p
 - **The Solution**: LifeLink provides a Webhook architecture. A hospital can subscribe a URL to specific events (e.g., `DONOR_ACCEPTED`).
 - **The Workflow**: The exact second a donor taps "Accept" on their phone, LifeLink fires an automated JSON payload directly to the hospital's internal system. This allows the hospital to automatically trigger ER alarms or print patient intake forms without any human intervention.
 
-### 5. Enterprise-Grade Security
+### 6. Enterprise-Grade Security
 - **Stateless JWT Authentication** with role-based access control.
 - Bcrypt password hashing.
 - Fully masked API responses to prevent data scraping of donor contact information.
