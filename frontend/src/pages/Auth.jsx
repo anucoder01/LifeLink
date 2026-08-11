@@ -77,7 +77,8 @@ export default function Auth() {
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Government ID (Aadhar/SSN)</label>
-                  <input required value={govId} onChange={(e) => setGovId(e.target.value)} type="text" placeholder="Required for medical verification" className="form-input" style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }} />
+                  <input required value={govId} onChange={(e) => setGovId(e.target.value)} type="text" placeholder="ID Number" className="form-input" style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'rgba(0,0,0,0.2)', color: 'white', marginBottom: '0.5rem' }} />
+                  <input type="file" accept=".pdf" required style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px dashed var(--color-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--color-text-muted)', fontSize: '0.875rem', cursor: 'pointer' }} />
                 </div>
               </>
             )}
