@@ -1,6 +1,6 @@
 import React from 'react';
 
-const PrimaryButton = ({ children, onClick, type = 'button', disabled = false, className = '', variant = 'primary' }) => {
+const PrimaryButton = ({ children, onClick, type = 'button', disabled = false, className = '', variant = 'primary', style = {} }) => {
   const baseStyle = {
     padding: '0.75rem 1.5rem',
     borderRadius: 'var(--radius-md)',
@@ -57,7 +57,7 @@ const PrimaryButton = ({ children, onClick, type = 'button', disabled = false, c
       className={className}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={{ ...baseStyle, ...variants[variant], ...(isHovered ? hoverStyle : {}) }}
+      style={{ ...baseStyle, ...variants[variant], ...(isHovered ? hoverStyle : {}), ...style }}
     >
       {children}
     </button>

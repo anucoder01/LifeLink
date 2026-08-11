@@ -55,10 +55,13 @@ const Navbar = () => {
       {/* Desktop Menu */}
       <div style={linksStyle} className="desktop-menu">
         <Link to="/" style={getLinkStyle('/')}>Home</Link>
-        <Link to="/requests" style={getLinkStyle('/requests')}>Donate Blood</Link>
+        <Link to="/requests" style={getLinkStyle('/requests')}>Donate</Link>
         <Link to="/my-requests" style={getLinkStyle('/my-requests')}>My SOS</Link>
-        <Link to="/dashboard" style={getLinkStyle('/dashboard')}>Dashboard</Link>
+        <Link to="/camps" style={getLinkStyle('/camps')}>Camps</Link>
+        <Link to="/driver" style={getLinkStyle('/driver')}>Drive</Link>
+        <Link to="/ngo" style={getLinkStyle('/ngo')}>NGO</Link>
         <Link to="/admin" style={getLinkStyle('/admin')}>Admin</Link>
+        <Link to="/dashboard" style={getLinkStyle('/dashboard')}>Dashboard</Link>
         <Link to="/auth">
           <PrimaryButton variant="primary" style={{ padding: '0.5rem 1rem' }}>Sign In</PrimaryButton>
         </Link>

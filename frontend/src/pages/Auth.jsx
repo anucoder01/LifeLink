@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LogIn, UserPlus, Shield, Heart, MapPin } from 'lucide-react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
@@ -9,6 +10,7 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [phone, setPhone] = useState();
   const [isLocating, setIsLocating] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -28,6 +30,7 @@ export default function Auth() {
           console.log("Captured real coordinates for registration:", { latitude, longitude });
           // Proceed with registration request using real coordinates
           alert(`Successfully captured location! Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}\nRegistration would proceed here.`);
+          navigate('/dashboard');
         },
         (error) => {
           setIsLocating(false);
@@ -42,6 +45,7 @@ export default function Auth() {
     } else {
       // Login logic
       console.log("Logging in with", phone);
+      navigate('/dashboard');
     }
   };
 

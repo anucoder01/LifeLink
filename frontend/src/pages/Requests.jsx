@@ -94,8 +94,10 @@ export default function Requests() {
             </div>
             
             <div style={{ display: 'flex', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
-              <PrimaryButton style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>Accept Request</PrimaryButton>
-              <button style={{ 
+              <PrimaryButton onClick={() => alert('You have accepted this request! Navigating to donor coordination...')} style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>Accept Request</PrimaryButton>
+              <button 
+                onClick={() => alert('Request declined. We will notify other nearby donors.')}
+                style={{ 
                 flex: 1, 
                 background: 'rgba(255,255,255,0.05)', 
                 border: '1px solid var(--color-border)', 

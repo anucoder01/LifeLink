@@ -6,6 +6,9 @@ import Dashboard from './pages/Dashboard';
 import Requests from './pages/Requests';
 import MyRequests from './pages/MyRequests';
 import HospitalAdmin from './pages/HospitalAdmin';
+import Camps from './pages/Camps';
+import DriverDashboard from './pages/DriverDashboard';
+import NGOAdmin from './pages/NGOAdmin';
 import Navbar from './components/Navbar';
 import './App.css';
 
@@ -21,6 +24,9 @@ function App() {
           <Route path="/requests" element={<Requests />} />
           <Route path="/my-requests" element={<MyRequests />} />
           <Route path="/admin" element={<HospitalAdmin />} />
+          <Route path="/camps" element={<Camps />} />
+          <Route path="/driver" element={<DriverDashboard />} />
+          <Route path="/ngo" element={<NGOAdmin />} />
         </Routes>
       </div>
     </Router>
