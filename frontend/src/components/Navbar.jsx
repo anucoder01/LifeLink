@@ -55,7 +55,7 @@ const Navbar = () => {
       {/* Desktop Menu */}
       <div style={linksStyle} className="desktop-menu">
         <Link to="/" style={getLinkStyle('/')}>Home</Link>
-        <Link to="/emergency" style={getLinkStyle('/emergency')}>Need Blood</Link>
+        <Link to="/requests" style={getLinkStyle('/requests')}>Need Blood</Link>
         <Link to="/dashboard" style={getLinkStyle('/dashboard')}>Dashboard</Link>
         <Link to="/auth">
           <PrimaryButton variant="primary" style={{ padding: '0.5rem 1rem' }}>Sign In</PrimaryButton>

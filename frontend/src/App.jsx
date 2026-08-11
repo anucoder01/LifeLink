@@ -1,20 +1,24 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Landing from './pages/Landing';
+import Auth from './pages/Auth';
+import Dashboard from './pages/Dashboard';
+import Requests from './pages/Requests';
+import Navbar from './components/Navbar';
+import './App.css';
 
 function App() {
   return (
     <Router>
-      <Navbar />
-      <main>
+      <div className="App">
+        <Navbar />
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/auth" element={<div style={{ paddingTop: '100px', textAlign: 'center' }}>Auth Page Coming Soon</div>} />
-          <Route path="/emergency" element={<div style={{ paddingTop: '100px', textAlign: 'center' }}>Emergency Page Coming Soon</div>} />
-          <Route path="/dashboard" element={<div style={{ paddingTop: '100px', textAlign: 'center' }}>Dashboard Coming Soon</div>} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/requests" element={<Requests />} />
         </Routes>
-      </main>
+      </div>
     </Router>
   );
 }
