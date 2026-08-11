@@ -10,6 +10,7 @@ export default function Auth() {
   const location = useLocation();
   const [isLogin, setIsLogin] = useState(location.state?.isLogin ?? true);
   const [phone, setPhone] = useState();
+  const [isLocating, setIsLocating] = useState(false);
   const [govId, setGovId] = useState('');
   const [fullName, setFullName] = useState('');
   const navigate = useNavigate();
