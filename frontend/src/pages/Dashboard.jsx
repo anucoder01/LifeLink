@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, MapPin, Activity, Link as LinkIcon, Shield, CheckCircle2, Phone, Heart, Trophy } from 'lucide-react';
+import { User, MapPin, Activity, Link as LinkIcon, Shield, CheckCircle2, Phone, Heart, Trophy, Calendar, Tent } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import PrimaryButton from '../components/PrimaryButton';
 import PhoneInput from 'react-phone-number-input';
@@ -180,6 +180,31 @@ export default function Dashboard() {
               </div>
             </div>
 
+          </div>
+        </GlassCard>
+
+        {/* Upcoming Events / Appointments */}
+        <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '1rem', gridColumn: '1 / -1', background: 'rgba(59, 130, 246, 0.05)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Calendar color="var(--color-primary)" /> Upcoming Events
+            </h3>
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 'bold', background: 'rgba(255,255,255,0.1)', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>2 Registered</span>
+          </div>
+          
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ flex: '1 1 300px', display: 'flex', gap: '1rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--color-border)', alignItems: 'center' }}>
+              <div style={{ padding: '0.75rem', background: 'rgba(220, 38, 38, 0.1)', borderRadius: '12px', color: 'var(--color-primary)' }}>
+                <Tent size={24} />
+              </div>
+              <div>
+                <p style={{ margin: '0 0 0.25rem 0', fontWeight: '500' }}>City Central Mega Drive</p>
+                <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <MapPin size={12} /> Central Park Pavilion
+                </p>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-success)', marginTop: '0.25rem', display: 'block' }}>This Saturday, 10:00 AM</span>
+              </div>
+            </div>
           </div>
         </GlassCard>
 
