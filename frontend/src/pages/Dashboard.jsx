@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, MapPin, Activity, Link as LinkIcon, Shield, CheckCircle2, Phone } from 'lucide-react';
+import { User, MapPin, Activity, Link as LinkIcon, Shield, CheckCircle2, Phone, Heart, Trophy } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import PrimaryButton from '../components/PrimaryButton';
 import PhoneInput from 'react-phone-number-input';
@@ -80,6 +80,31 @@ export default function Dashboard() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+        
+        {/* Impact Stats */}
+        <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '1rem', gridColumn: '1 / -1', background: 'linear-gradient(135deg, rgba(220,38,38,0.1) 0%, rgba(0,0,0,0.4) 100%)', border: '1px solid rgba(220,38,38,0.2)' }}>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 0.5rem 0' }}>
+            <Trophy color="var(--color-primary)" />
+            Your Impact
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+            <div style={{ padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', textAlign: 'center' }}>
+              <Heart size={24} color="var(--color-primary)" style={{ margin: '0 auto 0.5rem' }} />
+              <h4 style={{ margin: 0, fontSize: '1.5rem' }}>3</h4>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Lives Saved</p>
+            </div>
+            <div style={{ padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', textAlign: 'center' }}>
+              <Activity size={24} color="#10b981" style={{ margin: '0 auto 0.5rem' }} />
+              <h4 style={{ margin: 0, fontSize: '1.5rem' }}>14</h4>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Days Streak</p>
+            </div>
+            <div style={{ padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', textAlign: 'center' }}>
+              <User size={24} color="var(--color-warning)" style={{ margin: '0 auto 0.5rem' }} />
+              <h4 style={{ margin: 0, fontSize: '1.5rem' }}>Top 5%</h4>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>City Rank</p>
+            </div>
+          </div>
+        </GlassCard>
         
         {/* Health Profile */}
         <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
