@@ -17,7 +17,7 @@ const Landing = () => {
           Blood Chain social vouching system to connect patients with nearby donors instantly.
         </p>
         <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center' }}>
-          <Link to="/my-requests">
+          <Link to="/new-sos">
             <PrimaryButton variant="primary" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>
               I Need Blood Now
             </PrimaryButton>

@@ -9,6 +9,9 @@ import HospitalAdmin from './pages/HospitalAdmin';
 import Camps from './pages/Camps';
 import DriverDashboard from './pages/DriverDashboard';
 import NGOAdmin from './pages/NGOAdmin';
+import Profile from './pages/Profile';
+import Chat from './pages/Chat';
+import NewEmergency from './pages/NewEmergency';
 import Navbar from './components/Navbar';
 import './App.css';
 
@@ -27,6 +30,9 @@ function App() {
           <Route path="/camps" element={<Camps />} />
           <Route path="/driver" element={<DriverDashboard />} />
           <Route path="/ngo" element={<NGOAdmin />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/new-sos" element={<NewEmergency />} />
         </Routes>
       </div>
     </Router>

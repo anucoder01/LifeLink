@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Droplet, Menu, X } from 'lucide-react';
+import { Droplet, Menu, X, Bell, User } from 'lucide-react';
 import PrimaryButton from './PrimaryButton';
 
 const Navbar = () => {
@@ -62,9 +62,20 @@ const Navbar = () => {
         <Link to="/ngo" style={getLinkStyle('/ngo')}>NGO</Link>
         <Link to="/admin" style={getLinkStyle('/admin')}>Admin</Link>
         <Link to="/dashboard" style={getLinkStyle('/dashboard')}>Dashboard</Link>
-        <Link to="/auth">
-          <PrimaryButton variant="primary" style={{ padding: '0.5rem 1rem' }}>Sign In</PrimaryButton>
-        </Link>
+        
+        {/* Notifications & Profile */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginLeft: '1rem', borderLeft: '1px solid var(--color-border)', paddingLeft: '1.5rem' }}>
+          <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => alert("Notifications:\n1. O- Blood needed 2km away!\n2. Your SOS request is IN_PROGRESS")}>
+            <Bell size={20} color="var(--color-text)" />
+            <div style={{ position: 'absolute', top: '-4px', right: '-4px', width: '10px', height: '10px', background: 'var(--color-primary)', borderRadius: '50%' }}></div>
+          </div>
+          <Link to="/profile" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', color: 'var(--color-text)' }}>
+            <User size={18} />
+          </Link>
+          <Link to="/auth" style={{ marginLeft: '0.5rem' }}>
+            <PrimaryButton variant="primary" style={{ padding: '0.5rem 1rem' }}>Sign In</PrimaryButton>
+          </Link>
+        </div>
       </div>
 
       <style>{`
