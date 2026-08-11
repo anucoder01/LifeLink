@@ -48,6 +48,11 @@ It replaces manual broadcasting with a reliable, privacy-first matching system p
 - **Logistics & Volunteer Network**: A dedicated **Driver Dashboard** for transporting blood bags/donors, and an **NGO Portal** to manage donation camps and campaigns.
 - **Hospital Admin**: Real-time webhook configuration and live blood bank inventory tracking.
 
+### 5. Enterprise B2B Webhooks (System Integration)
+- **The Problem**: Hospitals don't want to manually monitor a dashboard; they need automated updates integrated directly into their existing IT systems (like an EMR).
+- **The Solution**: LifeLink provides a Webhook architecture. A hospital can subscribe a URL to specific events (e.g., `DONOR_ACCEPTED`).
+- **The Workflow**: The exact second a donor taps "Accept" on their phone, LifeLink fires an automated JSON payload directly to the hospital's internal system. This allows the hospital to automatically trigger ER alarms or print patient intake forms without any human intervention.
+
 ### 5. Enterprise-Grade Security
 - **Stateless JWT Authentication** with role-based access control.
 - Bcrypt password hashing.
