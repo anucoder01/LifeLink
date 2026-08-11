@@ -1,10 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AlertCircle, Clock, MapPin, Share2 } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import PrimaryButton from '../components/PrimaryButton';
 
 export default function Requests() {
   const [isLocating, setIsLocating] = React.useState(false);
+  const navigate = useNavigate();
 
   const handleNewSOS = () => {
     setIsLocating(true);
@@ -94,7 +96,14 @@ export default function Requests() {
             </div>
             
             <div style={{ display: 'flex', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
-              <PrimaryButton onClick={() => alert('You have accepted this request! Navigating to donor coordination...')} style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>Accept Request</PrimaryButton>
+              <PrimaryButton 
+                onClick={() => {
+                  alert('You have accepted this request! Navigating to donor coordination...');
+                  navigate('/dashboard');
+                }} 
+                style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                Accept Request
+              </PrimaryButton>
               <button 
                 onClick={() => alert('Request declined. We will notify other nearby donors.')}
                 style={{ 

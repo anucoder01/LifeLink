@@ -1,17 +1,58 @@
 import React, { useState } from 'react';
-import { Building2, Link as LinkIcon, Database, CheckCircle2, Plus } from 'lucide-react';
+import { Building2, Link as LinkIcon, Database, CheckCircle2, Plus, Lock } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import PrimaryButton from '../components/PrimaryButton';
 
 export default function HospitalAdmin() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  
   const [webhooks, setWebhooks] = useState([
     { id: 1, url: 'https://api.citygeneral.com/lifelink/webhooks', eventType: 'DONOR_MATCHED', status: 'ACTIVE' },
   ]);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (password === 'admin123') {
+      setIsAuthenticated(true);
+    } else {
+      alert('Invalid admin password. Try "admin123".');
+    }
+  };
 
   const handleAddWebhook = (e) => {
     e.preventDefault();
     alert('Webhook added successfully!');
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="container animate-fade-in" style={{ padding: '4rem 1.5rem', display: 'flex', justifyContent: 'center' }}>
+        <GlassCard style={{ width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Lock size={48} color="var(--color-primary)" style={{ marginBottom: '1rem' }} />
+          <h2 style={{ marginBottom: '0.5rem', margin: 0 }}>Admin Access</h2>
+          <p style={{ color: 'var(--color-text-muted)', marginBottom: '2rem', textAlign: 'center', fontSize: '0.875rem' }}>
+            This area is restricted to authorized hospital administrators.
+          </p>
+          
+          <form onSubmit={handleLogin} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <input 
+              type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter Admin Password" 
+              className="form-input" 
+              style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }} 
+              autoFocus
+            />
+            <PrimaryButton type="submit" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+              Authenticate
+            </PrimaryButton>
+          </form>
+        </GlassCard>
+      </div>
+    );
+  }
 
   return (
     <div className="container animate-fade-in" style={{ padding: '2rem 1.5rem' }}>
