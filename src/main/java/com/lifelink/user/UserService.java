@@ -64,6 +64,25 @@ public class UserService {
             user.setEmail(newEmail);
         }
 
+        if (dto.getAddress() != null) {
+            user.setAddress(dto.getAddress().strip());
+        }
+        if (dto.getDateOfBirth() != null) {
+            user.setDateOfBirth(dto.getDateOfBirth());
+        }
+        if (dto.getGender() != null) {
+            user.setGender(dto.getGender().strip());
+        }
+        if (dto.getEmergencyContact() != null) {
+            user.setEmergencyContact(dto.getEmergencyContact().strip());
+        }
+        if (dto.getWeight() != null) {
+            user.setWeight(dto.getWeight());
+        }
+        if (dto.getMedicalConditions() != null) {
+            user.setMedicalConditions(dto.getMedicalConditions().strip());
+        }
+
         user = userRepository.save(user);
         log.info("Profile updated for user {}", user.getId());
         return mapToDto(user);
@@ -104,6 +123,12 @@ public class UserService {
         dto.setEmail(user.getEmail());
         dto.setRole(user.getRole());
         dto.setCreatedAt(user.getCreatedAt());
+        dto.setAddress(user.getAddress());
+        dto.setDateOfBirth(user.getDateOfBirth());
+        dto.setGender(user.getGender());
+        dto.setEmergencyContact(user.getEmergencyContact());
+        dto.setWeight(user.getWeight());
+        dto.setMedicalConditions(user.getMedicalConditions());
         return dto;
     }
 }

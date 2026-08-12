@@ -3,6 +3,7 @@ package com.lifelink.user.dto;
 import com.lifelink.user.Role;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -15,4 +16,10 @@ public class UserProfileDto {
     private String email;
     private Role role;
     private LocalDateTime createdAt;
+    private String address;
+    private LocalDate dateOfBirth;
+    private String gender;
+    private String emergencyContact;
+    private Double weight;
+    private String medicalConditions;
 }
