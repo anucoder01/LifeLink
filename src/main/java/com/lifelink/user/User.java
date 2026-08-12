@@ -52,7 +52,7 @@ public class User {
     private String emergencyContact;
 
     @Column(precision = 5, scale = 2)
-    private Double weight;
+    private java.math.BigDecimal weight;
 
     @Column(name = "medical_conditions", columnDefinition = "TEXT")
     private String medicalConditions;

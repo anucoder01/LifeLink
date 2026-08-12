@@ -34,7 +34,7 @@ public class UpdateProfileDto {
     @Size(max = 50, message = "Emergency contact must be at most 50 characters")
     private String emergencyContact;
 
-    private Double weight;
+    private java.math.BigDecimal weight;
 
     private String medicalConditions;
 }

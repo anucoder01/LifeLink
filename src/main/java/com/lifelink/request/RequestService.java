@@ -34,6 +34,7 @@ public class RequestService {
     private final com.lifelink.institution.HospitalForwardRepository hospitalForwardRepository;
     private final RequestSseService requestSseService;
     private final com.lifelink.driver.DriverRepository driverRepository;
+    private final com.lifelink.hospital.HospitalRepository hospitalRepository;
 
     @Transactional
     public EmergencyRequest createRequest(EmergencyRequest request) {
@@ -44,6 +45,26 @@ public class RequestService {
         }
         EmergencyRequest saved = requestRepository.save(request);
         logEventAndNotify(saved, "CREATED", "Emergency request created for blood type " + request.getBloodType());
+        
+        // 3.2 Hospital inventory check before donor search
+        org.springframework.data.domain.Page<com.lifelink.hospital.Hospital> nearbyHospitals = 
+            hospitalRepository.findNearbyWithAvailableBlood(
+                request.getLocation(), 
+                15000.0, // 15km radius
+                request.getBloodType(), 
+                request.getComponentType().name(), 
+                org.springframework.data.domain.PageRequest.of(0, 1)
+            );
+            
+        if (nearbyHospitals.hasContent()) {
+            com.lifelink.hospital.Hospital hospital = nearbyHospitals.getContent().get(0);
+            saved.setStatus(RequestStatus.FULFILLED); // Or another state that indicates hospital fulfillment
+            requestRepository.save(saved);
+            logEventAndNotify(saved, "HOSPITAL_SUGGESTED", "Sufficient stock found at nearby hospital: " + hospital.getName() + ". Donor search halted.");
+            log.info("Request {} halted donor search. Sufficient stock at hospital {}", saved.getId(), hospital.getName());
+            return saved;
+        }
+
         broadcastToDonors(saved);
         return saved;
     }

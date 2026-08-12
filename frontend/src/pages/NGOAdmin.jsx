@@ -46,6 +46,51 @@ export default function NGOAdmin() {
         </GlassCard>
       </div>
 
+      <GlassCard style={{ marginBottom: '2rem', background: 'linear-gradient(135deg, rgba(37,99,235,0.1) 0%, rgba(139,92,246,0.1) 100%)', border: '1px solid rgba(139,92,246,0.3)' }}>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', marginTop: 0 }}>
+          <TrendingUp color="#8b5cf6" size={20} /> Request vs Fulfillment Metrics
+        </h3>
+        
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', height: '200px', padding: '1rem 0', borderBottom: '1px solid var(--color-border)' }}>
+          {/* Mock Bar Chart */}
+          {[
+            { month: 'Jan', req: 120, ful: 100 },
+            { month: 'Feb', req: 150, ful: 130 },
+            { month: 'Mar', req: 200, ful: 160 },
+            { month: 'Apr', req: 180, ful: 175 },
+            { month: 'May', req: 250, ful: 240 },
+          ].map((data, idx) => (
+            <div key={data.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', height: '100%', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'flex-end', height: '100%', width: '60%' }}>
+                <div style={{ 
+                  width: '50%', 
+                  height: `${(data.req / 250) * 100}%`, 
+                  background: 'var(--color-warning)',
+                  borderRadius: '4px 4px 0 0',
+                  animation: `slideUp 1s ease-out ${idx * 0.1}s backwards`
+                }} title={`Requests: ${data.req}`} />
+                <div style={{ 
+                  width: '50%', 
+                  height: `${(data.ful / 250) * 100}%`, 
+                  background: 'var(--color-success)',
+                  borderRadius: '4px 4px 0 0',
+                  animation: `slideUp 1s ease-out ${(idx * 0.1) + 0.2}s backwards`
+                }} title={`Fulfillments: ${data.ful}`} />
+              </div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{data.month}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: '2rem', justifyContent: 'center', marginTop: '1rem', fontSize: '0.875rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: '12px', height: '12px', background: 'var(--color-warning)', borderRadius: '2px' }} /> Total Requests
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: '12px', height: '12px', background: 'var(--color-success)', borderRadius: '2px' }} /> Fulfillments
+          </div>
+        </div>
+      </GlassCard>
+
       <GlassCard>
         <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', marginTop: 0 }}>
           <FileText color="var(--color-primary)" size={20} /> My Campaigns
@@ -63,8 +108,8 @@ export default function NGOAdmin() {
               </tr>
             </thead>
             <tbody>
-              {campaigns.map(c => (
-                <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              {campaigns.map((c, i) => (
+                <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', animation: `fadeIn 0.5s ease-out ${i * 0.1}s backwards` }}>
                   <td style={{ padding: '1rem 0', fontWeight: '500' }}>{c.name}</td>
                   <td style={{ padding: '1rem 0' }}>
                     <span style={{ 
@@ -73,7 +118,8 @@ export default function NGOAdmin() {
                       fontSize: '0.75rem', 
                       fontWeight: 'bold',
                       background: c.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.1)',
-                      color: c.status === 'ACTIVE' ? '#10b981' : 'var(--color-text-muted)'
+                      color: c.status === 'ACTIVE' ? '#10b981' : 'var(--color-text-muted)',
+                      boxShadow: c.status === 'ACTIVE' ? '0 0 10px rgba(16, 185, 129, 0.4)' : 'none'
                     }}>
                       {c.status}
                     </span>
@@ -81,7 +127,7 @@ export default function NGOAdmin() {
                   <td style={{ padding: '1rem 0' }}>{c.totalDonors}</td>
                   <td style={{ padding: '1rem 0', color: 'var(--color-primary)' }}>{c.impact}</td>
                   <td style={{ padding: '1rem 0' }}>
-                    <button style={{ background: 'none', border: '1px solid var(--color-border)', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '4px', cursor: 'pointer' }}>View Report</button>
+                    <button style={{ background: 'var(--color-primary)', border: 'none', color: 'white', padding: '0.4rem 1rem', borderRadius: '4px', cursor: 'pointer', transition: 'all 0.2s', fontWeight: 'bold' }}>View Report</button>
                   </td>
                 </tr>
               ))}
@@ -89,6 +135,17 @@ export default function NGOAdmin() {
           </table>
         </div>
       </GlassCard>
+      
+      <style>{`
+        @keyframes slideUp {
+          from { height: 0; opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

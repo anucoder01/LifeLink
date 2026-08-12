@@ -20,6 +20,6 @@ public class UserProfileDto {
     private LocalDate dateOfBirth;
     private String gender;
     private String emergencyContact;
-    private Double weight;
+    private java.math.BigDecimal weight;
     private String medicalConditions;
 }

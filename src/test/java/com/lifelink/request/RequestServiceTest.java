@@ -43,6 +43,7 @@ public class RequestServiceTest {
     @Mock private RequestSseService requestSseService;
     @Mock private com.lifelink.institution.HospitalForwardRepository hospitalForwardRepository;
     @Mock private com.lifelink.driver.DriverRepository driverRepository;
+    @Mock private com.lifelink.hospital.HospitalRepository hospitalRepository;
 
     @InjectMocks
     private RequestService requestService;
@@ -126,5 +127,44 @@ public class RequestServiceTest {
 
         assertEquals(RequestStatus.EXPIRED, request.getStatus());
         verify(requestRepository, times(1)).save(request);
+    }
+
+    @Test
+    void testCreateRequest_HospitalInventoryFound() {
+        com.lifelink.hospital.Hospital hospital = new com.lifelink.hospital.Hospital();
+        hospital.setId(UUID.randomUUID());
+        hospital.setName("Test Hospital");
+
+        org.springframework.data.domain.Page<com.lifelink.hospital.Hospital> page = new org.springframework.data.domain.PageImpl<>(List.of(hospital));
+        
+        when(requestRepository.save(any())).thenReturn(request);
+        when(hospitalRepository.findNearbyWithAvailableBlood(
+            eq(request.getLocation()), eq(15000.0), eq(request.getBloodType()), eq(request.getComponentType().name()), any()
+        )).thenReturn(page);
+
+        EmergencyRequest result = requestService.createRequest(request);
+
+        assertEquals(RequestStatus.FULFILLED, result.getStatus());
+        verify(requestRepository, times(2)).save(any(EmergencyRequest.class));
+        verify(matchingEngine, never()).findEligibleDonors(any(), anyInt());
+    }
+
+    @Test
+    void testCreateRequest_NoHospitalInventory_TriggersDonorSearch() {
+        org.springframework.data.domain.Page<com.lifelink.hospital.Hospital> page = new org.springframework.data.domain.PageImpl<>(List.of());
+        
+        when(requestRepository.save(any())).thenReturn(request);
+        when(hospitalRepository.findNearbyWithAvailableBlood(
+            eq(request.getLocation()), eq(15000.0), eq(request.getBloodType()), eq(request.getComponentType().name()), any()
+        )).thenReturn(page);
+        
+        // Mock matching engine to return empty, triggering blood chain
+        when(matchingEngine.findEligibleDonors(any(), anyInt())).thenReturn(List.of());
+
+        EmergencyRequest result = requestService.createRequest(request);
+
+        assertEquals(RequestStatus.PENDING, result.getStatus());
+        verify(requestRepository, times(1)).save(any(EmergencyRequest.class));
+        verify(matchingEngine, times(1)).findEligibleDonors(any(), anyInt());
     }
 }

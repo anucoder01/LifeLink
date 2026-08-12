@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Building2, Link as LinkIcon, Database, CheckCircle2, Plus, Lock, Ambulance, AlertTriangle, TrendingDown } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import PrimaryButton from '../components/PrimaryButton';
+import LiveMap from '../components/LiveMap';
 
 export default function HospitalAdmin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -171,6 +172,44 @@ export default function HospitalAdmin() {
           </GlassCard>
         </div>
       </div>
+      
+      {/* Live Map Radar */}
+      <GlassCard style={{ marginTop: '2rem', borderTop: '4px solid var(--color-primary)' }}>
+        <h3 style={{ margin: '0 0 1rem 0', color: 'var(--color-primary)' }}>Live Map view of matching in action</h3>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: '1rem' }}>Tracking active emergency radius (5/15/30km) and live donor pins via SSE.</p>
+        
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+          <input 
+            type="text" 
+            placeholder="Enter Request ID to track..." 
+            id="trackingRequestId"
+            className="form-input" 
+            style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }} 
+          />
+          <PrimaryButton onClick={() => {
+            const reqId = document.getElementById('trackingRequestId').value;
+            if(!reqId) return;
+            const eventSource = new EventSource(`http://localhost:8080/api/v1/requests/${reqId}/stream`);
+            eventSource.addEventListener("EVENT", (e) => {
+              console.log("SSE Event:", e.data);
+              // For demonstration purposes, we parse and log it
+            });
+            alert('Subscribed to SSE stream for Request ' + reqId);
+          }}>
+            Start Tracking
+          </PrimaryButton>
+        </div>
+
+        <LiveMap 
+            center={[12.9716, 77.5946]} 
+            emergencyTitle="Active Trauma Code Red" 
+            donors={[
+                { id: '1', name: 'Rajesh K. (Matched)', lat: 12.9720, lng: 77.5950, status: 'Notified' },
+                { id: '2', name: 'Priya M. (Accepted)', lat: 12.9690, lng: 77.5920, status: 'Accepted' },
+                { id: '3', name: 'Amit (Declined)', lat: 12.9800, lng: 77.6000, status: 'Declined' }
+            ]} 
+        />
+      </GlassCard>
     </div>
   );
 }
