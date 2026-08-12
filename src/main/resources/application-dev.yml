@@ -1,0 +1,6 @@
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.lifelink: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

@@ -44,11 +44,9 @@ firebase:
 
 logging:
   level:
-    org.springframework.security: DEBUG
+    root: WARN
     org.springframework.web: INFO
-    com.lifelink: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.lifelink: INFO
 
 # Public base URL used in invite SMS links
 app:
