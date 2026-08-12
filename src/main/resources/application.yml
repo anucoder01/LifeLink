@@ -42,6 +42,15 @@ firebase:
   config:
     path: ${FIREBASE_CONFIG_PATH:classpath:firebase-service-account.json}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
 logging:
   level:
     root: WARN

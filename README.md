@@ -1,5 +1,6 @@
 # LifeLink 🩸 — Blood Donor & Emergency Request Network
 
+![CI](https://github.com/anucoder01/LifeLink/actions/workflows/ci.yml/badge.svg)
 > **Real-time, geo-targeted blood donor matching with social impact features designed to save lives where conventional systems fail.**
 
 LifeLink replaces manual WhatsApp-group blood requests with a reliable, privacy-first matching system powered by PostGIS geo-queries, Firebase push notifications, and a unique **Blood Chain** social vouching network.
