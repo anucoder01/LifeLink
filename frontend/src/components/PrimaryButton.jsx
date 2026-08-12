@@ -22,7 +22,7 @@ const PrimaryButton = ({ children, onClick, type = 'button', disabled = false, c
     primary: {
       backgroundColor: 'var(--color-primary)',
       color: '#ffffff',
-      boxShadow: '0 4px 14px rgba(220, 38, 38, 0.4)',
+      boxShadow: 'var(--shadow-glow)',
     },
     secondary: {
       backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -40,11 +40,11 @@ const PrimaryButton = ({ children, onClick, type = 'button', disabled = false, c
   const hoverStyle = disabled ? {} : {
     transform: 'translateY(-2px)',
     boxShadow: variant === 'primary' 
-      ? '0 6px 20px rgba(220, 38, 38, 0.6)' 
+      ? '0 6px 20px rgba(255, 51, 102, 0.6), var(--shadow-glow)' 
       : '0 6px 20px rgba(0, 0, 0, 0.2)',
     ...(variant === 'primary' && { backgroundColor: 'var(--color-primary-hover)' }),
     ...(variant === 'secondary' && { backgroundColor: 'rgba(255, 255, 255, 0.15)' }),
-    ...(variant === 'danger' && { backgroundColor: 'rgba(220, 38, 38, 0.1)' }),
+    ...(variant === 'danger' && { backgroundColor: 'rgba(255, 51, 102, 0.1)' }),
   };
 
   const [isHovered, setIsHovered] = React.useState(false);
