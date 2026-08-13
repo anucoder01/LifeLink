@@ -1,4 +1,4 @@
-# LifeLink 🩸 — Blood Donor & Emergency Request Network
+# LifeLink 🩸 — Blood Donor & Emergency Request Network 
 
 ![CI](https://github.com/anucoder01/LifeLink/actions/workflows/ci.yml/badge.svg)
 > **Real-time, geo-targeted blood donor matching with social impact features designed to save lives where conventional systems fail.**
