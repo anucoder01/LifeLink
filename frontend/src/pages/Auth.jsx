@@ -46,13 +46,17 @@ export default function Auth() {
       }
     } catch (err) {
       const message = err.response?.data;
-      setError(typeof message === 'string' ? message : message?.message || 'Could not sign in. Check your details and try again.');
+      setError(typeof message === 'string'
+        ? message
+        : message?.message || (err.response?.status === 401
+          ? 'Phone or password not recognized. New here? Create your own donor account below; there is no shared demo login.'
+          : 'Could not sign in. Check your details and try again.'));
     } finally { setBusy(false); }
   };
 
   return <main className="container" style={{ padding: '4rem 1.5rem', maxWidth: 500 }}>
     <h2>{isLogin ? 'Sign in to LifeLink' : 'Register as a donor'}</h2>
-    <p>{isLogin ? 'Use your registered phone number and password.' : 'Create a donor account. Location sharing is optional and can be updated later.'}</p>
+    <p>{isLogin ? 'Use your registered phone number and password. First time here? Create your own account below; sample demo accounts cannot sign in.' : 'Create a donor account. Location sharing is optional and can be updated later.'}</p>
     <GlassCard><form onSubmit={submit} style={{ display: 'grid', gap: 16 }}>
       {!isLogin && <>
         <label>Full name<input required maxLength="100" value={name} onChange={e => setName(e.target.value)} /></label>
