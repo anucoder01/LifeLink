@@ -84,8 +84,12 @@ export default function Requests() {
           <Marker position={[12.96, 77.58]} icon={donorIcon}>
             <Popup>You (Verified Donor)</Popup>
           </Marker>
-          <Marker position={[12.94, 77.63]} icon={donorIcon} />
-          <Marker position={[12.98, 77.61]} icon={donorIcon} />
+          <Marker position={[12.94, 77.63]} icon={donorIcon}>
+            <Popup>Nearby Donor (Available)</Popup>
+          </Marker>
+          <Marker position={[12.98, 77.61]} icon={donorIcon}>
+            <Popup>Nearby Donor (Busy)</Popup>
+          </Marker>
         </MapContainer>
       </GlassCard>
 
