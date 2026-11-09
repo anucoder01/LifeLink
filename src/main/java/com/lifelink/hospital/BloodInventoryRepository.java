@@ -15,6 +15,8 @@ public interface BloodInventoryRepository extends JpaRepository<BloodInventory, 
 
     List<BloodInventory> findByHospitalId(UUID hospitalId);
 
+    List<BloodInventory> findByBloodTypeAndComponentTypeAndHospitalVerifiedTrue(String bloodType, ComponentType componentType);
+
     Page<BloodInventory> findByHospitalId(UUID hospitalId, Pageable pageable);
 
     Optional<BloodInventory> findByHospitalIdAndBloodTypeAndComponentType(

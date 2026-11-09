@@ -33,6 +33,9 @@ public class BloodInventory {
     @Column(name = "units_available")
     private Integer unitsAvailable = 0;
 
+    @Column(name = "untracked_units", nullable = false)
+    private Integer untrackedUnits = 0;
+
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;

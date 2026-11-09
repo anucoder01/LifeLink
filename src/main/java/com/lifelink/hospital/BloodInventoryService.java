@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.time.LocalDateTime;
+import java.time.Duration;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -24,6 +26,12 @@ public class BloodInventoryService {
 
     private final BloodInventoryRepository inventoryRepository;
     private final HospitalRepository hospitalRepository;
+    private final BloodUnitLotRepository lotRepository;
+
+    @org.springframework.beans.factory.annotation.Value("${inventory.stale-hours:24}")
+    private long staleHours;
+
+    public record AvailabilityStatus(long totalUnits, LocalDateTime lastConfirmedAt, boolean stale, int reportingHospitals) {}
 
     // -------------------------------------------------------------------------
     // Queries
@@ -48,6 +56,17 @@ public class BloodInventoryService {
         return inventoryRepository
                 .sumAvailableUnits(bloodType.toUpperCase(), componentType)
                 .orElse(0L);
+    }
+
+    @Transactional(readOnly = true)
+    public AvailabilityStatus getAvailabilityStatus(String bloodType, ComponentType componentType) {
+        List<BloodInventory> records = inventoryRepository.findByBloodTypeAndComponentTypeAndHospitalVerifiedTrue(
+                bloodType.trim().toUpperCase(), componentType);
+        long total = records.stream().mapToLong(record -> record.getUnitsAvailable() == null ? 0 : record.getUnitsAvailable()).sum();
+        LocalDateTime oldest = records.stream().map(BloodInventory::getUpdatedAt).filter(java.util.Objects::nonNull)
+                .min(LocalDateTime::compareTo).orElse(null);
+        boolean stale = records.isEmpty() || oldest == null || oldest.isBefore(LocalDateTime.now().minus(Duration.ofHours(staleHours)));
+        return new AvailabilityStatus(total, oldest, stale, records.size());
     }
 
     // -------------------------------------------------------------------------
@@ -81,6 +100,9 @@ public class BloodInventoryService {
                 });
 
         inventory.setUnitsAvailable(dto.getUnitsAvailable());
+        long lotUnits = lotRepository.sumActiveUnits(hospitalId, dto.getBloodType().toUpperCase(), dto.getComponentType(), LotStatus.AVAILABLE);
+        // Preserve legacy stock as an untracked balance when users continue to update the aggregate endpoint.
+        inventory.setUntrackedUnits(Math.toIntExact(Math.max(0, dto.getUnitsAvailable() - lotUnits)));
         inventory = inventoryRepository.save(inventory);
         log.info("Inventory upserted — hospital={} bloodType={} component={} units={}",
                 hospitalId, dto.getBloodType(), dto.getComponentType(), dto.getUnitsAvailable());
@@ -94,8 +116,10 @@ public class BloodInventoryService {
      */
     @CacheEvict(value = CacheNames.HOSPITALS_NEARBY_BLOOD, allEntries = true)
     @Transactional
-    public void delete(UUID inventoryId) {
-        if (!inventoryRepository.existsById(inventoryId)) {
+    public void delete(UUID hospitalId, UUID inventoryId) {
+        BloodInventory inventory = inventoryRepository.findById(inventoryId)
+                .orElseThrow(() -> new EntityNotFoundException("Inventory record not found: " + inventoryId));
+        if (!inventory.getHospital().getId().equals(hospitalId)) {
             throw new EntityNotFoundException("Inventory record not found: " + inventoryId);
         }
         inventoryRepository.deleteById(inventoryId);

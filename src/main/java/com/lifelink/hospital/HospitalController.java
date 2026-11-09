@@ -18,6 +18,8 @@ import com.lifelink.common.dto.PaginatedResponse;
 import com.lifelink.common.util.PaginationUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 
 @Tag(name = "Hospital", description = "Hospital registration and geo-search")
 @RestController
@@ -26,6 +28,7 @@ import org.springframework.data.domain.Pageable;
 public class HospitalController {
 
     private final HospitalService hospitalService;
+    private final HospitalAccessService hospitalAccessService;
 
     // -------------------------------------------------------------------------
     // CRUD
@@ -73,10 +76,13 @@ public class HospitalController {
      * Updates hospital name and location.
      */
     @Operation(summary = "Update hospital details")
+    @PreAuthorize("hasRole('HOSPITAL_ADMIN') or hasRole('SUPER_ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<HospitalDto> update(
+            Authentication authentication,
             @PathVariable UUID id,
             @Valid @RequestBody CreateHospitalDto dto) {
+        hospitalAccessService.assertCanAccess(authentication.getName(), id);
         return ResponseEntity.ok(hospitalService.update(id, dto));
     }
 
@@ -85,6 +91,7 @@ public class HospitalController {
      * Marks a hospital as verified or unverified (admin action).
      */
     @Operation(summary = "Set hospital verification status")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PutMapping("/{id}/verify")
     public ResponseEntity<HospitalDto> setVerified(
             @PathVariable UUID id,
@@ -96,6 +103,7 @@ public class HospitalController {
      * DELETE /api/v1/hospitals/{id}
      */
     @Operation(summary = "Delete a hospital")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         hospitalService.delete(id);
