@@ -35,9 +35,38 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRATION=${JWT_EXPIRATION:-3600000}
       - FIREBASE_CONFIG_PATH=${FIREBASE_CONFIG_PATH}
+      - APP_BASE_URL=${APP_BASE_URL:-http://localhost:8080}
+      - TWILIO_ENABLED=${TWILIO_ENABLED:-false}
+      - TWILIO_SID=${TWILIO_SID:-}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
+      - TWILIO_FROM_NUMBER=${TWILIO_FROM_NUMBER:-}
+      - TWILIO_WHATSAPP_FROM_NUMBER=${TWILIO_WHATSAPP_FROM_NUMBER:-}
+      - TWILIO_PUBLIC_WEBHOOK_URL=${TWILIO_PUBLIC_WEBHOOK_URL:-}
+      - INVENTORY_STALE_HOURS=${INVENTORY_STALE_HOURS:-24}
     depends_on:
       - postgres
       - redis
+    restart: unless-stopped
+
+  backup:
+    image: postgres:15-alpine
+    container_name: lifelink_backup
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: ${DB_USER:-lifelink}
+      PGPASSWORD: ${DB_PASSWORD:-lifelink}
+      PGDATABASE: ${DB_NAME:-lifelink_db}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      - postgres
+    command: >-
+      sh -c 'while true; do file="/backups/lifelink-$$(date +%Y%m%d-%H%M%S).dump";
+      pg_dump -Fc -f "$$file" && find /backups -type f -name "lifelink-*.dump" -mtime +"$$BACKUP_RETENTION_DAYS" -delete;
+      sleep "$$BACKUP_INTERVAL_SECONDS"; done'
     restart: unless-stopped
 
 volumes:

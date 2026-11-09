@@ -1,209 +1,121 @@
-# LifeLink 🩸 — Blood Donor & Emergency Request Network 
+# LifeLink
 
-![CI](https://github.com/anucoder01/LifeLink/actions/workflows/ci.yml/badge.svg)
-> **Real-time, geo-targeted blood donor matching with social impact features designed to save lives where conventional systems fail.**
 
-LifeLink replaces manual WhatsApp-group blood requests with a reliable, privacy-first matching system powered by PostGIS geo-queries, Firebase push notifications, and a unique **Blood Chain** social vouching network.
+LifeLink is a blood donation and emergency coordination prototype. It combines a Spring Boot API, PostgreSQL/PostGIS, Redis, and a React web client. The project is intended for local evaluation and a supervised pilot; it is not a substitute for hospital transfusion workflows.
 
----
+## Implemented
 
-## ✨ Features
+- Phone and password authentication with JWTs, donor/requester self-registration, role-based authorization, and administrator-created hospital accounts.
+- Geo-targeted donor matching with blood compatibility and donation eligibility checks, radius expansion, FCM notifications, and SMS/WhatsApp fallback through Twilio.
+- Emergency requests with donor response tracking, request history, SSE updates, driver requests, hospital stock suggestions, and an administrator verification queue. New requests are not matched or broadcast until a `SUPER_ADMIN` verifies them.
+- Blood Chain invitations to a donor's trusted contacts when matching has no eligible donors at the configured maximum radius.
+- Hospital stock totals and per-lot tracking for collection date, expiry, temperature check history, quarantine, and inter-hospital handoff/receipt. The aggregate stock total is updated from the tracked lots when they are created, quarantined, transferred, or expired.
+- Stock freshness endpoint reports the oldest hospital stock confirmation and whether it is older than `INVENTORY_STALE_HOURS` (24 hours by default).
+- Donor consent settings, donation history, FCM token management, availability controls, recovery check-ins, and impact badges/leaderboard/certificates.
+- React flows for sign-in, donor registration, request submission and status, live donor locations, gamification/recovery, and hospital lot management.
 
-### Core Platform
-- 🔐 **JWT Authentication** — secure stateless auth with role-based access (`DONOR`, `REQUESTER`, `HOSPITAL_ADMIN`)
-- 📍 **Geo-targeted Matching** — PostGIS `ST_DWithin` finds eligible donors within radius; auto-expands 5km → 15km → 30km if unanswered
-- 🩸 **Blood Type Compatibility Matrix** — full ABO/Rh compatibility rules enforced at matching time
-- ⏱️ **Donation Eligibility Cooldowns** — Whole Blood (90d), Platelets (14d), Plasma (28d)
-- 🔔 **Firebase Push Notifications (FCM)** — instant alerts to matched donors with priority flag for CRITICAL urgency
-- 📵 **Donor Respond Flow** — donors explicitly ACCEPT or DECLINE; request promoted to IN_PROGRESS on first acceptance
-- 📵 **Active Status Toggle** — donors can mark themselves unavailable; excluded from all matching
-- ⏰ **Scheduled Jobs** — auto radius-expansion every 5 min, auto-expiry check every 60s
-- 🏥 **Hospital & Blood Inventory** — data model for hospital blood stock tracking
+Some other pages (such as the public requests map, camps, NGO, and driver portals) remain prototypes and still contain sample content or simulated actions. Check the page and API before using any function in a live workflow.
 
-### Frontend Application (Vite + React)
-- ⚛️ **Modern React Framework** — lightning-fast Vite + React stack with 0-config HMR
-- 🎨 **Glassmorphism UI** — state-of-the-art vanilla CSS system without relying on Tailwind
-- 🗺️ **Real-time Geolocation** — integrates browser HTML5 Geolocation API to auto-fetch exact GPS coordinates
-- ☎️ **International Dialing** — `react-phone-number-input` integration for global phone number support
-- 🚑 **My SOS Requests** — Track live donor responses, request volunteer drivers, and close requests
-- 🏥 **Hospital Admin Portal** — Manage realtime webhooks and visualize blood bank inventory
-- 🚙 **Driver Dashboard** — Volunteer logistics platform for blood bag delivery and donor transport
-- 🤝 **NGO Partner Portal** — Analytics dashboard for NGOs to track campaign impact and donor turnout
-- 🏕️ **Blood Donation Camps** — Interface to discover and register for local blood donation drives
+## Stack
 
-### Feature A — Blood Chain 🔗 *(Social Vouching Network)*
-> *When no registered donors are found within 30km, the Blood Chain activates.*
+- Java 17+, Spring Boot 3.3, Spring Security, JWT, Flyway
+- PostgreSQL 15 with PostGIS; Redis 7
+- React, Vite, Leaflet
+- Firebase Cloud Messaging; optional Twilio SMS and WhatsApp
 
-Each donor nominates up to **3 trusted contacts** as backup donors. When the matching engine exhausts the 30km radius with zero eligible donors:
+## Run locally
 
-1. The system generates a unique **72-hour one-time invite link** per contact
-2. An **SMS** is sent to each vouched contact: *"Your friend said you'd help. O+ blood is needed nearby. Register here: [link]"*
-3. The contact taps the link → registration form pre-fills their name & phone → they register as a donor in ~2 minutes
-4. The token is consumed on use; expired tokens are cleaned up daily
+Prerequisites: Java 17 or newer, Node.js 20 or newer, and Docker Compose.
 
-**Privacy guarantees:** Contact data is held only until they opt in. Phone numbers are masked in all API responses. Donors can remove contacts at any time.
+1. Copy `.env.example` to `.env`. Replace `JWT_SECRET` with a random secret of at least 32 bytes. Add Firebase and Twilio credentials only when those services are configured.
+2. Start the database and cache:
 
-**SMS:** Powered by a Twilio-compatible stub (logs in dev mode). Set `TWILIO_ENABLED=true` to send real SMS.
+   ```sh
+   docker compose up -d postgres redis backup
+   ```
 
----
+3. Export the required environment variables into the shell running Spring Boot, then start the API:
 
-## 🛠 Tech Stack
+   ```sh
+   ./mvnw spring-boot:run
+   ```
 
-| Layer | Technology |
+   On Windows use `mvnw.cmd spring-boot:run`. Flyway applies the database migrations on startup.
+
+4. Start the web client in another shell:
+
+   ```sh
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+   `VITE_API_BASE_URL` can point the client at a different API host; it defaults to `http://localhost:8080`.
+
+API documentation is available at `http://localhost:8080/swagger-ui.html`.
+
+## Account setup and access
+
+- Public registration only accepts `DONOR` and `REQUESTER` roles. Hospital and super-administrator roles must not be supplied through public registration.
+- A super-administrator account must be provisioned out of band by the deployment operator. The project does not create a default administrator password.
+- A `SUPER_ADMIN` verifies a hospital, then creates its administrator with `POST /api/v1/admin/hospital-admins`. Hospital administrators can access only the hospital assigned to their account.
+- A `SUPER_ADMIN` reviews new requests through `GET /api/v1/admin/requests/pending-verification` and approves one with `PUT /api/v1/admin/requests/{id}/verify`. Approval starts inventory lookup and donor matching.
+
+## Useful API routes
+
+| Route | Purpose |
 |---|---|
-| **Backend** | Java 21, Spring Boot 3.3.x |
-| **Database** | PostgreSQL 15+ with PostGIS extension |
-| **Spatial Queries** | Hibernate Spatial + PostGIS `ST_DWithin` |
-| **Caching** | Redis 7.x |
-| **Auth** | JWT (jjwt 0.12.3) |
-| **Push Notifications** | Firebase Cloud Messaging (FCM) via Firebase Admin SDK |
-| **SMS** | Twilio (stub included, activate with env vars) |
-| **Migrations** | Flyway |
-| **API Docs** | OpenAPI 3 / Swagger UI |
-| **Containerization** | Docker Compose |
+| `POST /api/v1/auth/register` and `/login` | Register as donor/requester or sign in |
+| `POST /api/v1/requests` | Submit an emergency request for verification |
+| `GET /api/v1/requests` | List the signed-in requester's requests |
+| `PUT /api/v1/admin/requests/{id}/verify` | Approve a request and begin matching (super-admin) |
+| `GET /api/v1/hospitals/inventory/availability/status` | Read stock totals and freshness by blood type/component |
+| `/api/v1/hospitals/{hospitalId}/lots` | Create and list blood-unit lots (assigned hospital admin) |
+| `/api/v1/hospitals/{hospitalId}/lots/{lotId}/temperature` | Record a cold-chain check; an out-of-range report quarantines the lot |
+| `/api/v1/hospitals/{hospitalId}/lots/{lotId}/handoffs` | Record units entering transit |
+| `/api/v1/hospitals/{hospitalId}/lots/handoffs/{handoffId}/receive` | Confirm receipt at the destination hospital |
+| `GET /api/v1/donors/me/gamification` and `/recovery` | Read the signed-in donor's own impact and check-in data |
+| `POST /api/v1/webhooks/twilio/inbound-sms` | Process signed SMS replies such as `YES <full-request-id>`, `NO`, `STATUS`, `STOP`, and `START` |
 
----
+## Configuration
 
-## 🚀 Quick Start
-
-### Prerequisites
-- Java 21 ([Eclipse Temurin](https://adoptium.net/temurin/releases/?version=21))
-- Docker & Docker Compose
-
-### 1. Configure Environment Variables
-```bash
-cp .env.example .env
-```
-Edit `.env` with your database credentials, JWT secret, Firebase config path, and (optionally) Twilio credentials.
-
-### 2. Start Infrastructure
-```bash
-docker-compose up -d postgres redis
-```
-
-### 3. Run the Application
-```bash
-./mvnw spring-boot:run
-```
-Flyway migrations run automatically and seed the database with sample data.
-
-### 4. Explore the API
-Open Swagger UI: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-
----
-
-## 📡 Key API Endpoints
-
-### Auth
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/v1/auth/login` | Login, returns JWT |
-| `POST` | `/api/v1/auth/register` | Register a new user |
-| `POST` | `/api/v1/auth/register/invited?token=` | Register via Blood Chain invite link |
-
-### Donor
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/v1/donors/me` | Get my donor profile |
-| `PUT` | `/api/v1/donors/me/location` | Update GPS location |
-| `PUT` | `/api/v1/donors/me/fcm-token` | Register/refresh FCM push token |
-| `PUT` | `/api/v1/donors/me/active?active=` | Toggle availability |
-
-### Emergency Requests
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/v1/requests` | Create emergency blood request |
-| `POST` | `/api/v1/requests/{id}/respond` | ACCEPT or DECLINE a request |
-| `PUT` | `/api/v1/requests/{id}/fulfill` | Mark request as fulfilled |
-| `PUT` | `/api/v1/requests/{id}/cancel` | Cancel a request |
-| `GET` | `/api/v1/requests/{id}` | Get request details |
-
-### Blood Chain
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `GET` | `/api/v1/donors/me/vouches` | 🔒 | List trusted backup contacts |
-| `POST` | `/api/v1/donors/me/vouches` | 🔒 | Add a trusted contact (max 3) |
-| `DELETE` | `/api/v1/donors/me/vouches/{id}` | 🔒 | Remove a trusted contact |
-| `GET` | `/api/v1/blood-chain/invite/{token}` | 🌐 | Validate invite link (public) |
-
----
-
-## 🏗 Architecture Overview
-
-```
-Emergency Request Created
-        │
-        ▼
-  Matching Engine (PostGIS ST_DWithin)
-  ┌─────────────────────────────────┐
-  │  Radius: 5km → 15km → 30km     │
-  │  Blood type compatibility check │
-  │  Donation eligibility check     │
-  └─────────────────────────────────┘
-        │
-        ├─ Donors found → FCM push notification
-        │
-        └─ No donors at 30km → BLOOD CHAIN ACTIVATES
-                │
-                ▼
-         SMS to vouched contacts
-         (one-time 72hr invite link)
-                │
-                ▼
-         Contact registers → joins donor pool
-```
-
-### Key Design Decisions
-- **Anonymity first**: Donor contact info is never exposed until they explicitly ACCEPT a request
-- **Dual notification**: FCM for registered donors, SMS fallback for Blood Chain contacts
-- **Privacy-preserving SMS**: Contact phone numbers are masked in all API responses
-- **Scheduled expansion**: Radius expands every 5 min; Blood Chain only triggers at max radius with zero results
-
----
-
-## 🗺 Roadmap
-
-See [ROADMAP.md](./ROADMAP.md) for the full feature roadmap. 100+ features organized across 17 phases:
-
-| Phase | Focus |
+| Variable | Purpose |
 |---|---|
-| **Phase 1** | Core backend completion (pagination, webhooks, tests) |
-| **Phase 2** | Extended auth — blood bank, NGO, OTP, Google SSO, ABHA |
-| **Phase 3** | Donor health profiling, questionnaire, consent management |
-| **Phase 4** | Geo-matching extensions — ETA routing, live location, geo-fencing |
-| **Phase 5** | Emergency system — smart ranking, cascading, SOS escalation, disaster mode |
-| **Phase 6** | Smart notifications — SMS/WhatsApp fallback, silent hours, in-app center |
-| **Phase 7** | Blood Chain extensions + Driver Network + Family Pacts + Communities |
-| **Phase 8** | Gamification — impact dashboard, badges, XP, leaderboards, streaks |
-| **Phase 9** | Hospital & blood bank platform — live tracking, analytics, cross-hospital |
-| **Phase 10** | AI features — smart ranking, demand prediction, fake detection, chatbot |
-| **Phase 11** | Trust & safety — rare blood registry, reputation, audit logs, rate limiting |
-| **Phase 12** | Analytics — heatmaps, blood group stats, response times, KPIs |
-| **Phase 13** | Post-donation health companion — 7-day recovery protocol |
-| **Phase 14** | Accessibility, multilingual support, digital donor cards, certificates |
-| **Phase 15** | Community — camps, disaster mode, corporate CSR, campus ambassadors |
-| **Phase 16** | Infrastructure hardening — rate limiting, monitoring, backups, encryption |
-| **Phase 17** | Frontend — React/Flutter Web donor dashboard, hospital admin, public portal |
+| `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD` | PostgreSQL/PostGIS connection |
+| `SPRING_DATA_REDIS_HOST`, `SPRING_DATA_REDIS_PORT` | Redis connection |
+| `JWT_SECRET` | Required signing key (at least 32 bytes); no built-in production default |
+| `FIREBASE_CONFIG_PATH` | Firebase service-account JSON path; push notifications are unavailable until configured |
+| `APP_BASE_URL` | Public application URL used in Blood Chain invitations |
+| `TWILIO_ENABLED` | Enables provider delivery; defaults to `false` |
+| `TWILIO_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` | Twilio SMS credentials and sender |
+| `TWILIO_WHATSAPP_FROM_NUMBER` | Approved Twilio WhatsApp sender, if used |
+| `TWILIO_PUBLIC_WEBHOOK_URL` | Exact public URL configured as the Twilio inbound callback; required for signature validation |
+| `INVENTORY_STALE_HOURS` | Age after which stock is marked stale (default 24) |
+| `BACKUP_INTERVAL_SECONDS`, `BACKUP_RETENTION_DAYS` | Scheduled PostgreSQL dump interval and local retention period for the optional Compose backup service |
 
----
+## Operational limits to address before a real deployment
 
-## 🔒 Environment Variables
+- Request review is currently performed by a `SUPER_ADMIN`; a hospital-specific verification workflow and evidence handling need to be agreed with pilot partners.
+- Lot temperatures are operator-entered and the in-range flag is supplied by the operator. Connect validated temperature devices and configure clinically approved ranges before treating these records as cold-chain assurance.
+- The donor recovery panel is a self-reported log, not medical advice. Recovery content should be reviewed by qualified clinicians for the pilot region.
+- The Compose backup service writes compressed database dumps to `./backups`; store copies off-host and test restores before relying on them. Configure verified Firebase/Twilio accounts, public HTTPS callback URLs, monitoring, and data-retention procedures. Do not use sample data or local credentials for real patient care.
+- The database is required for the full automated test suite. Start PostgreSQL/PostGIS and Redis before running integration tests.
 
-| Variable | Required | Description |
-|---|---|---|
-| `SPRING_DATASOURCE_URL` | ✅ | PostgreSQL JDBC URL |
-| `SPRING_DATASOURCE_USERNAME` | ✅ | DB username |
-| `SPRING_DATASOURCE_PASSWORD` | ✅ | DB password |
-| `JWT_SECRET` | ✅ | HS256 secret (min 32 bytes) |
-| `JWT_EXPIRATION` | ❌ | Token TTL in ms (default: 86400000) |
-| `FIREBASE_CONFIG_PATH` | ✅ | Path to Firebase service account JSON |
-| `APP_BASE_URL` | ❌ | Public URL for invite links (default: localhost:8080) |
-| `TWILIO_ENABLED` | ❌ | Set `true` to send real SMS (default: false) |
-| `TWILIO_SID` | ⚠️ | Twilio Account SID (required if enabled) |
-| `TWILIO_AUTH_TOKEN` | ⚠️ | Twilio Auth Token (required if enabled) |
-| `TWILIO_FROM_NUMBER` | ⚠️ | Twilio sender number in E.164 format |
+## Verification
 
----
+```sh
+./mvnw test
+cd frontend && npm run build
+```
 
-## 📄 License
+Windows:
+
+```powershell
+./mvnw.cmd test
+cd frontend
+npm.cmd run build
+```
+
+## License
+
 MIT
