@@ -137,6 +137,9 @@ public class AuthController {
     @Operation(summary = "Register a new user")
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+        if (request.getRole() != Role.DONOR && request.getRole() != Role.REQUESTER) {
+            return ResponseEntity.badRequest().body("Public registration is limited to donor and requester accounts");
+        }
         if (userRepository.findByPhone(request.getPhone()).isPresent()) {
             return ResponseEntity.badRequest().body("Phone number is already in use");
         }

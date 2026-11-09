@@ -35,7 +35,7 @@ spring:
     baseline-on-migrate: true
 
 jwt:
-  secret: ${JWT_SECRET:my_super_secret_jwt_key_that_must_be_at_least_32_bytes_long}
+  secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:86400000}
 
 firebase:
@@ -68,8 +68,12 @@ twilio:
   enabled: ${TWILIO_ENABLED:false}
   account-sid: ${TWILIO_SID:}
   auth-token: ${TWILIO_AUTH_TOKEN:}
-  from-number: ${TWILIO_FROM_NUMBER:+10000000000}
+  from-number: ${TWILIO_FROM_NUMBER:}
+  public-webhook-url: ${TWILIO_PUBLIC_WEBHOOK_URL:}
+  whatsapp-from-number: ${TWILIO_WHATSAPP_FROM_NUMBER:}
 
 # Matching configuration
 matching:
   max-radius-km: ${MATCHING_MAX_RADIUS_KM:50}
+inventory:
+  stale-hours: ${INVENTORY_STALE_HOURS:24}
