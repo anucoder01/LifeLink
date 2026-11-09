@@ -26,7 +26,7 @@ public class Donor {
     @Column(name = "blood_type", nullable = false, length = 5)
     private String bloodType;
 
-    @Column(columnDefinition = "geography(Point,4326)", nullable = false)
+    @Column(columnDefinition = "geography(Point,4326)")
     private Point location;
 
     @Column(name = "last_donation_date")
