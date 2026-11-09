@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import GoogleMapView from './GoogleMapView';
 
 // Fix for default marker icons in react-leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -41,36 +42,36 @@ export default function LiveMap({ center, emergencyTitle, donors = [] }) {
     if (center) setMapCenter(center);
   }, [center]);
 
+  const markers = [
+    { position: mapCenter, title: emergencyTitle || 'Emergency Location', label: emergencyTitle || 'Emergency Location' },
+    ...donors.map(donor => ({
+      position: [donor.lat, donor.lng],
+      title: donor.name,
+      label: `${donor.name} · Status: ${donor.status}`
+    }))
+  ];
+  const circles = [
+    { center: mapCenter, radius: 5000, color: '#3b82f6' },
+    { center: mapCenter, radius: 15000, color: '#f59e0b' }
+  ];
+  const fallback = <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%', zIndex: 0 }}>
+    <TileLayer
+      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+    />
+    <Marker position={mapCenter} icon={emergencyIcon}>
+      <Popup><strong>{emergencyTitle || 'Emergency Location'}</strong></Popup>
+    </Marker>
+    <Circle center={mapCenter} radius={5000} pathOptions={{ color: 'var(--color-primary)', fillColor: 'var(--color-primary)', fillOpacity: 0.1, weight: 1 }} />
+    <Circle center={mapCenter} radius={15000} pathOptions={{ color: 'var(--color-warning)', fillColor: 'var(--color-warning)', fillOpacity: 0.05, weight: 1 }} />
+    {donors.map(donor => <Marker key={donor.id} position={[donor.lat, donor.lng]} icon={donorIcon}>
+      <Popup><strong>{donor.name}</strong><br />Status: {donor.status}</Popup>
+    </Marker>)}
+  </MapContainer>;
+
   return (
     <div style={{ height: '400px', width: '100%', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
-      <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%', zIndex: 0 }}>
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        />
-        
-        {/* Emergency Origin */}
-        <Marker position={mapCenter} icon={emergencyIcon}>
-          <Popup>
-            <strong>{emergencyTitle || 'Emergency Location'}</strong>
-          </Popup>
-        </Marker>
-
-        {/* 5km Radius */}
-        <Circle center={mapCenter} radius={5000} pathOptions={{ color: 'var(--color-primary)', fillColor: 'var(--color-primary)', fillOpacity: 0.1, weight: 1 }} />
-        {/* 15km Radius */}
-        <Circle center={mapCenter} radius={15000} pathOptions={{ color: 'var(--color-warning)', fillColor: 'var(--color-warning)', fillOpacity: 0.05, weight: 1 }} />
-        
-        {/* Donors */}
-        {donors.map(donor => (
-          <Marker key={donor.id} position={[donor.lat, donor.lng]} icon={donorIcon}>
-            <Popup>
-              <strong>{donor.name}</strong><br/>
-              Status: {donor.status}
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+      <GoogleMapView center={mapCenter} zoom={13} markers={markers} circles={circles} fallback={fallback} />
     </div>
   );
 }

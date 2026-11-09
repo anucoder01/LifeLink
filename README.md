@@ -50,7 +50,7 @@ Prerequisites: Java 17 or newer, Node.js 20 or newer, and Docker Compose.
    npm run dev
    ```
 
-   `VITE_API_BASE_URL` can point the client at a different API host; it defaults to `http://localhost:8080`.
+   Copy `frontend/.env.example` to `frontend/.env.local` to configure browser settings. `VITE_API_BASE_URL` can point the client at a different API host; it defaults to `http://localhost:8080`. Google Maps is optional; set `VITE_GOOGLE_MAPS_API_KEY` to use it. If the key is unset or rejected, maps continue to use OpenStreetMap.
 
 API documentation is available at `http://localhost:8080/swagger-ui.html`.
 
@@ -92,6 +92,8 @@ API documentation is available at `http://localhost:8080/swagger-ui.html`.
 | `TWILIO_PUBLIC_WEBHOOK_URL` | Exact public URL configured as the Twilio inbound callback; required for signature validation |
 | `INVENTORY_STALE_HOURS` | Age after which stock is marked stale (default 24) |
 | `BACKUP_INTERVAL_SECONDS`, `BACKUP_RETENTION_DAYS` | Scheduled PostgreSQL dump interval and local retention period for the optional Compose backup service |
+
+The Google Maps JavaScript API key is a frontend setting in `frontend/.env.local`, not the backend `.env`. Create a key in Google Cloud, enable the Maps JavaScript API and billing, then restrict the key to that API and your local/deployed web referrers. Browser keys are visible to users, so apply those restrictions and usage limits. See [Google's API key setup guide](https://developers.google.com/maps/documentation/javascript/get-api-key).
 
 ## Operational limits to address before a real deployment
 
