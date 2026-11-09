@@ -1,4 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
+import { Circle, CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png'
+});
 
 let mapsApiPromise;
 
@@ -44,7 +54,6 @@ function loadGoogleMaps(apiKey) {
         resolve(maps);
       };
       window.gm_authFailure = authFailure;
-
       script.async = true;
       script.onerror = () => fail(new Error('Google Maps could not be loaded.'));
       script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&loading=async&callback=${callbackName}`;
@@ -59,47 +68,57 @@ const toLatLng = point => Array.isArray(point)
   ? { lat: Number(point[0]), lng: Number(point[1]) }
   : { lat: Number(point.lat), lng: Number(point.lng) };
 
-export default function GoogleMapView({ center, markers = [], circles = [], zoom = 12, style, fallback }) {
+export default function GoogleMapView({ center, markers = [], circles = [], zoom = 12, style }) {
   const mapElement = useRef(null);
   const mapInstance = useRef(null);
-  const [mode, setMode] = useState(import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? 'loading' : 'fallback');
+  const mapCenter = toLatLng(center);
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim();
+  const [mode, setMode] = useState(apiKey ? 'google-loading' : 'leaflet');
 
   useEffect(() => {
     let cancelled = false;
     if (!apiKey) {
-      setMode('fallback');
+      setMode('leaflet');
       return undefined;
     }
 
-    setMode('loading');
+    setMode('google-loading');
     loadGoogleMaps(apiKey)
       .then(() => { if (!cancelled) setMode('google'); })
-      .catch(() => { if (!cancelled) setMode('fallback'); });
+      .catch(() => { if (!cancelled) setMode('leaflet'); });
     return () => { cancelled = true; };
   }, [apiKey]);
 
   useEffect(() => {
-    if (mode !== 'google' || !mapElement.current || !window.google?.maps) return;
-    mapInstance.current = new window.google.maps.Map(mapElement.current, {
-      center: toLatLng(center),
+    if (mode !== 'google' || !mapElement.current || !window.google?.maps) return undefined;
+    const map = new window.google.maps.Map(mapElement.current, {
+      center: mapCenter,
       zoom,
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: true
     });
-  }, [center, mode, zoom]);
+    mapInstance.current = map;
+    return () => { mapInstance.current = null; };
+  }, [mapCenter.lat, mapCenter.lng, mode, zoom]);
 
   useEffect(() => {
     const map = mapInstance.current;
-    const maps = window.google?.maps;
-    if (!map || !maps) return undefined;
-
+    if (mode !== 'google' || !map || !window.google?.maps) return undefined;
+    const maps = window.google.maps;
     const renderedMarkers = markers.map(item => {
       const marker = new maps.Marker({
         map,
         position: toLatLng(item.position),
-        title: item.title || ''
+        title: item.title || '',
+        icon: {
+          path: maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: item.color || '#e11d48',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2
+        }
       });
       if (item.label) {
         const content = document.createElement('div');
@@ -127,23 +146,33 @@ export default function GoogleMapView({ center, markers = [], circles = [], zoom
   }, [circles, markers, mode]);
 
   useEffect(() => {
-    if (mapInstance.current && mode === 'google') mapInstance.current.setCenter(toLatLng(center));
-  }, [center, mode]);
+    if (mapInstance.current && mode === 'google') mapInstance.current.setCenter(mapCenter);
+  }, [mapCenter.lat, mapCenter.lng, mode]);
 
-  const statusText = mode === 'loading'
-    ? 'Loading Google Maps…'
-    : apiKey
-      ? 'Google Maps is unavailable; showing the OpenStreetMap fallback.'
-      : 'Showing OpenStreetMap. Add VITE_GOOGLE_MAPS_API_KEY to frontend/.env.local to enable Google Maps.';
-
-  return <div style={{ position: 'relative', width: '100%', height: '100%', ...style }}>
-    {mode === 'google'
-      ? <div ref={mapElement} style={{ width: '100%', height: '100%' }} />
-      : fallback}
-    {mode !== 'google' && <div role="status" style={{
-      position: 'absolute', left: 8, bottom: 8, zIndex: 500, maxWidth: 'calc(100% - 32px)',
-      padding: '6px 10px', borderRadius: 6, background: 'rgba(15, 23, 42, .9)',
-      color: '#fff', fontSize: 12
-    }}>{statusText}</div>}
+  return <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: 260, ...style }}>
+    {mode === 'google-loading'
+      ? <div role="status" style={{ display: 'grid', placeItems: 'center', height: '100%', color: '#475569' }}>Loading map…</div>
+      : mode === 'google'
+        ? <div ref={mapElement} style={{ width: '100%', height: '100%' }} />
+        : <MapContainer center={[mapCenter.lat, mapCenter.lng]} zoom={zoom} scrollWheelZoom style={{ width: '100%', height: '100%' }}>
+          <TileLayer
+            url="https://tile.openstreetmap.de/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> · Tiles <a href="https://www.openstreetmap.de/">OpenStreetMap.de</a>'
+          />
+          {circles.map((circle, index) => <Circle
+            key={`circle-${index}`}
+            center={[toLatLng(circle.center).lat, toLatLng(circle.center).lng]}
+            radius={circle.radius}
+            pathOptions={{ color: circle.color || '#ef4444', fillOpacity: 0.1 }}
+          />)}
+          {markers.map((item, index) => <CircleMarker
+            key={`${item.title || 'marker'}-${index}`}
+            center={[toLatLng(item.position).lat, toLatLng(item.position).lng]}
+            radius={9}
+            pathOptions={{ color: '#fff', weight: 3, fillColor: item.color || '#e11d48', fillOpacity: 1 }}
+          >
+            {(item.label || item.title) && <Popup>{item.label || item.title}</Popup>}
+          </CircleMarker>)}
+        </MapContainer>}
   </div>;
 }

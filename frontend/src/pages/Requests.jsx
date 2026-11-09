@@ -1,39 +1,8 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, Clock, MapPin, Share2, Car } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 import GlassCard from '../components/GlassCard';
 import PrimaryButton from '../components/PrimaryButton';
 import GoogleMapView from '../components/GoogleMapView';
-
-// Fix Leaflet's default icon path issues
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-// Create custom icons for SOS and Donors
-const emergencyIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-const donorIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
 
 export default function Requests() {
   const navigate = useNavigate();
@@ -47,10 +16,10 @@ export default function Requests() {
     { id: 2, type: 'B+', hospital: 'Apollo Spectra', distance: '12 km', time: '1 hour ago', urgency: 'HIGH', status: 'IN_PROGRESS', lat: 12.9352, lng: 77.6245 },
   ];
   const mapMarkers = [
-    ...requests.map(req => ({ position: [req.lat, req.lng], title: req.hospital, label: `${req.hospital} · Urgent ${req.type} needed` })),
-    { position: [12.96, 77.58], title: 'You (Verified Donor)' },
-    { position: [12.94, 77.63], title: 'Nearby Donor (Available)' },
-    { position: [12.98, 77.61], title: 'Nearby Donor (Busy)' }
+    ...requests.map(req => ({ position: [req.lat, req.lng], title: req.hospital, label: `${req.hospital} · Urgent ${req.type} needed`, color: '#e11d48' })),
+    { position: [12.96, 77.58], title: 'You (Verified Donor)', color: '#16a34a' },
+    { position: [12.94, 77.63], title: 'Nearby Donor (Available)', color: '#16a34a' },
+    { position: [12.98, 77.61], title: 'Nearby Donor (Busy)', color: '#64748b' }
   ];
   const mapCircles = requests.map(req => ({ center: [req.lat, req.lng], radius: 3000, color: '#ef4444' }));
 
@@ -70,23 +39,7 @@ export default function Requests() {
       </div>
 
       <GlassCard style={{ padding: '0', overflow: 'hidden', marginBottom: '2rem', height: '400px', border: '1px solid var(--color-border)' }}>
-        <GoogleMapView center={[12.95, 77.6]} zoom={12} markers={mapMarkers} circles={mapCircles} fallback={
-          <MapContainer center={[12.95, 77.6]} zoom={12} style={{ height: '100%', width: '100%', background: '#111827' }}>
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
-            {requests.map(req => <React.Fragment key={req.id}>
-              <Marker position={[req.lat, req.lng]} icon={emergencyIcon}>
-                <Popup><strong>{req.hospital}</strong><br />Urgent: {req.type} Needed</Popup>
-              </Marker>
-              <Circle center={[req.lat, req.lng]} radius={3000} pathOptions={{ color: 'var(--color-primary)', fillColor: 'var(--color-primary)', fillOpacity: 0.1 }} />
-            </React.Fragment>)}
-            <Marker position={[12.96, 77.58]} icon={donorIcon}><Popup>You (Verified Donor)</Popup></Marker>
-            <Marker position={[12.94, 77.63]} icon={donorIcon}><Popup>Nearby Donor (Available)</Popup></Marker>
-            <Marker position={[12.98, 77.61]} icon={donorIcon}><Popup>Nearby Donor (Busy)</Popup></Marker>
-          </MapContainer>
-        } />
+        <GoogleMapView center={[12.95, 77.6]} zoom={12} markers={mapMarkers} circles={mapCircles} />
       </GlassCard>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>

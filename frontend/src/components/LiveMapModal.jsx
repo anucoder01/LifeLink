@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { api } from '../services/api';
-import 'leaflet/dist/leaflet.css';
 import GoogleMapView from './GoogleMapView';
 
 export default function LiveMapModal({ isOpen, onClose, request }) {
@@ -30,7 +28,8 @@ export default function LiveMapModal({ isOpen, onClose, request }) {
   const markers = locations.map(item => ({
     position: [item.latitude, item.longitude],
     title: 'Matched donor location',
-    label: `Matched donor location · Updated ${new Date(item.timestamp).toLocaleTimeString()}`
+    label: `Matched donor location · Updated ${new Date(item.timestamp).toLocaleTimeString()}`,
+    color: '#2563eb'
   }));
   return <div style={overlayStyle}>
     <section className="glass-card" role="dialog" aria-modal="true" aria-label="Live donor tracking" style={modalStyle}>
@@ -40,14 +39,7 @@ export default function LiveMapModal({ isOpen, onClose, request }) {
       <label>Request ID <input value={requestId} onChange={e => setRequestId(e.target.value)} placeholder="Paste your request ID" /></label>
       {error && <p role="status">{error}</p>}
       {!error && requestId && !locations.length && <p>Waiting for a donor to share their live location…</p>}
-      {center && <div style={{ height: 360, marginTop: 12 }}><GoogleMapView center={center} zoom={13} markers={markers} fallback={
-        <MapContainer center={center} zoom={13} style={{ height: '100%', width: '100%' }}>
-          <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          {locations.map(item => <Marker key={item.donorId} position={[item.latitude, item.longitude]}>
-            <Popup>Matched donor location · Updated {new Date(item.timestamp).toLocaleTimeString()}</Popup>
-          </Marker>)}
-        </MapContainer>
-      } /></div>}
+      {center && <div style={{ height: 360, marginTop: 12 }}><GoogleMapView center={center} zoom={13} markers={markers} /></div>}
     </section>
   </div>;
 }
