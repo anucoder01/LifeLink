@@ -44,6 +44,7 @@ public class RequestServiceTest {
     @Mock private com.lifelink.institution.HospitalForwardRepository hospitalForwardRepository;
     @Mock private com.lifelink.driver.DriverRepository driverRepository;
     @Mock private com.lifelink.hospital.HospitalRepository hospitalRepository;
+    @Mock private com.lifelink.donor.GamificationService gamificationService;
 
     @InjectMocks
     private RequestService requestService;
@@ -130,7 +131,7 @@ public class RequestServiceTest {
     }
 
     @Test
-    void testCreateRequest_HospitalInventoryFound() {
+    void testCreateRequest_WaitsForVerificationBeforeInventoryMatching() {
         com.lifelink.hospital.Hospital hospital = new com.lifelink.hospital.Hospital();
         hospital.setId(UUID.randomUUID());
         hospital.setName("Test Hospital");
@@ -138,32 +139,32 @@ public class RequestServiceTest {
         org.springframework.data.domain.Page<com.lifelink.hospital.Hospital> page = new org.springframework.data.domain.PageImpl<>(List.of(hospital));
         
         when(requestRepository.save(any())).thenReturn(request);
-        when(hospitalRepository.findNearbyWithAvailableBlood(
-            eq(request.getLocation()), eq(15000.0), eq(request.getBloodType()), eq(request.getComponentType().name()), any()
-        )).thenReturn(page);
-
         EmergencyRequest result = requestService.createRequest(request);
 
-        assertEquals(RequestStatus.FULFILLED, result.getStatus());
-        verify(requestRepository, times(2)).save(any(EmergencyRequest.class));
+        assertEquals(RequestStatus.PENDING, result.getStatus());
+        org.junit.jupiter.api.Assertions.assertFalse(result.isVerified());
+        verify(requestRepository, times(1)).save(any(EmergencyRequest.class));
+        verify(hospitalRepository, never()).findNearbyWithAvailableBlood(any(), anyDouble(), any(), any(), any());
         verify(matchingEngine, never()).findEligibleDonors(any(), anyInt());
     }
 
     @Test
-    void testCreateRequest_NoHospitalInventory_TriggersDonorSearch() {
+    void testVerifiedRequest_WithoutHospitalInventoryTriggersDonorSearch() {
         org.springframework.data.domain.Page<com.lifelink.hospital.Hospital> page = new org.springframework.data.domain.PageImpl<>(List.of());
-        
-        when(requestRepository.save(any())).thenReturn(request);
+        UUID verifier = UUID.randomUUID();
+        when(requestRepository.findById(request.getId())).thenReturn(Optional.of(request));
+        when(requestRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(hospitalRepository.findNearbyWithAvailableBlood(
             eq(request.getLocation()), eq(15000.0), eq(request.getBloodType()), eq(request.getComponentType().name()), any()
         )).thenReturn(page);
-        
-        // Mock matching engine to return empty, triggering blood chain
         when(matchingEngine.findEligibleDonors(any(), anyInt())).thenReturn(List.of());
 
-        EmergencyRequest result = requestService.createRequest(request);
+        request.setVerified(false);
+        EmergencyRequest result = requestService.verifyRequest(request.getId(), verifier);
 
         assertEquals(RequestStatus.PENDING, result.getStatus());
+        org.junit.jupiter.api.Assertions.assertTrue(result.isVerified());
+        assertEquals(verifier, result.getVerifiedBy());
         verify(requestRepository, times(1)).save(any(EmergencyRequest.class));
         verify(matchingEngine, times(1)).findEligibleDonors(any(), anyInt());
     }

@@ -9,4 +9,5 @@ import java.util.UUID;
 public interface RequestRepository extends JpaRepository<EmergencyRequest, UUID> {
     List<EmergencyRequest> findByStatus(RequestStatus status);
     Page<EmergencyRequest> findByRequesterId(UUID requesterId, Pageable pageable);
+    List<EmergencyRequest> findByVerifiedFalseOrderByCreatedAtAsc();
 }

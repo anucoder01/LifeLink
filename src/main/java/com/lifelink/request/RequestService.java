@@ -35,38 +35,55 @@ public class RequestService {
     private final RequestSseService requestSseService;
     private final com.lifelink.driver.DriverRepository driverRepository;
     private final com.lifelink.hospital.HospitalRepository hospitalRepository;
+    private final com.lifelink.donor.GamificationService gamificationService;
 
     @Transactional
     public EmergencyRequest createRequest(EmergencyRequest request) {
         request.setStatus(RequestStatus.PENDING);
+        request.setVerified(false);
         request.setCurrentRadiusKm(5);
         if (request.getExpiresAt() == null) {
             request.setExpiresAt(LocalDateTime.now().plusHours(24));
         }
         EmergencyRequest saved = requestRepository.save(request);
         logEventAndNotify(saved, "CREATED", "Emergency request created for blood type " + request.getBloodType());
+        return saved;
+    }
+
+    @Transactional
+    public EmergencyRequest verifyRequest(UUID requestId, UUID verifierId) {
+        EmergencyRequest request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Request not found"));
+        if (request.isVerified()) return request;
+        request.setVerified(true);
+        request.setVerifiedBy(verifierId);
+        request.setVerifiedAt(LocalDateTime.now());
+        requestRepository.save(request);
+        logEventAndNotify(request, "VERIFIED", "Emergency request verified by an authorized coordinator");
+        processVerifiedRequest(request);
+        return request;
+    }
+
+    private void processVerifiedRequest(EmergencyRequest saved) {
         
         // 3.2 Hospital inventory check before donor search
         org.springframework.data.domain.Page<com.lifelink.hospital.Hospital> nearbyHospitals = 
             hospitalRepository.findNearbyWithAvailableBlood(
-                request.getLocation(), 
+                saved.getLocation(),
                 15000.0, // 15km radius
-                request.getBloodType(), 
-                request.getComponentType().name(), 
+                saved.getBloodType(),
+                saved.getComponentType().name(),
                 org.springframework.data.domain.PageRequest.of(0, 1)
             );
             
         if (nearbyHospitals.hasContent()) {
             com.lifelink.hospital.Hospital hospital = nearbyHospitals.getContent().get(0);
-            saved.setStatus(RequestStatus.FULFILLED); // Or another state that indicates hospital fulfillment
-            requestRepository.save(saved);
-            logEventAndNotify(saved, "HOSPITAL_SUGGESTED", "Sufficient stock found at nearby hospital: " + hospital.getName() + ". Donor search halted.");
+            logEventAndNotify(saved, "HOSPITAL_SUGGESTED", "Reported stock is available at nearby hospital: " + hospital.getName() + ". Confirm with the hospital; the request remains open.");
             log.info("Request {} halted donor search. Sufficient stock at hospital {}", saved.getId(), hospital.getName());
-            return saved;
+            return;
         }
 
         broadcastToDonors(saved);
-        return saved;
     }
 
     @Transactional
@@ -122,6 +139,7 @@ public class RequestService {
 
         EmergencyRequest request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Request not found: " + requestId));
+        if (!request.isVerified()) throw new IllegalStateException("Request has not been verified");
 
         if (request.getStatus() == RequestStatus.FULFILLED
                 || request.getStatus() == RequestStatus.CANCELLED
@@ -169,6 +187,10 @@ public class RequestService {
     }
 
     private void broadcastToDonors(EmergencyRequest request) {
+        if (!request.isVerified()) {
+            log.info("Request {} has not passed verification; donor broadcast skipped", request.getId());
+            return;
+        }
         List<Donor> eligibleDonors = matchingEngine.findEligibleDonors(request, request.getCurrentRadiusKm());
 
         // Filter out already notified donors
@@ -203,7 +225,8 @@ public class RequestService {
             requestResponseRepository.save(response);
 
             fcmService.sendNotificationToDonor(donor, "Emergency Blood Request",
-                    "Blood type " + request.getBloodType() + " is needed urgently.",
+                    "Blood type " + request.getBloodType() + " is needed. Request ID: " + request.getId()
+                            + ". Reply YES " + request.getId() + " or NO " + request.getId() + ".",
                     request.getUrgency() == com.lifelink.request.Urgency.CRITICAL,
                     request.getId().toString());
         }
@@ -314,6 +337,10 @@ public class RequestService {
         response.setRespondedAt(LocalDateTime.now());
         requestResponseRepository.save(response);
 
+        if (status == RequestResponseStatus.DONATED) {
+            gamificationService.recordDonation(donor.getId(), request.getUrgency() == Urgency.CRITICAL);
+        }
+
         logResponseEventAndNotify(request, donor, status, "Donor status updated to: " + status);
     }
 
@@ -322,6 +349,11 @@ public class RequestService {
         com.lifelink.user.User user = userRepository.findByPhone(phone)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         return requestRepository.findByRequesterId(user.getId(), pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<EmergencyRequest> getRequestsAwaitingVerification() {
+        return requestRepository.findByVerifiedFalseOrderByCreatedAtAsc();
     }
 
     @Transactional

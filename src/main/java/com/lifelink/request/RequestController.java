@@ -52,6 +52,9 @@ public class RequestController {
         request.setBloodType(dto.getBloodType());
         request.setComponentType(dto.getComponentType());
         request.setUrgency(dto.getUrgency());
+        request.setVerificationReference(dto.getVerificationReference());
+        request.setUnitsRequired(dto.getUnitsRequired() == null ? 1 : dto.getUnitsRequired());
+        request.setFacilityName(dto.getFacilityName());
 
         Point location = geometryFactory.createPoint(new Coordinate(dto.getLongitude(), dto.getLatitude()));
         location.setSRID(4326);
