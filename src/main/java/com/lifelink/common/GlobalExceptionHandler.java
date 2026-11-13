@@ -2,6 +2,7 @@ package com.lifelink.common;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -14,6 +15,12 @@ import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    /** 401 — invalid login credentials. */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiError> handleAuthenticationException(AuthenticationException ex) {
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Unauthorized", "Phone or password not recognized.");
+    }
 
     /** 400 — bean validation failures; returns all field-level messages. */
     @ExceptionHandler(MethodArgumentNotValidException.class)
