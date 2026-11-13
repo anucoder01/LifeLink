@@ -26,6 +26,7 @@ export default function Auth() {
 
   const submit = async event => {
     event.preventDefault(); setBusy(true); setError('');
+    let action = isLogin ? 'sign in' : 'create your account';
     try {
       if (isLogin) {
         const { data } = await api.post('/auth/login', { phone, password });
@@ -41,6 +42,7 @@ export default function Auth() {
           latitude: position?.coords.latitude ?? null,
           longitude: position?.coords.longitude ?? null
         });
+        action = 'sign in after registration';
         const { data } = await api.post('/auth/login', { phone, password });
         saveSession(data);
       }
@@ -50,7 +52,9 @@ export default function Auth() {
         ? message
         : message?.message || (err.response?.status === 401
           ? 'Phone or password not recognized. New here? Create your own donor account below; there is no shared demo login.'
-          : 'Could not sign in. Check your details and try again.'));
+          : !err.response
+            ? `Could not ${action}: the LifeLink server is unreachable. Start the backend and database, then try again.`
+            : `Could not ${action}. Check your details and try again.`));
     } finally { setBusy(false); }
   };
 
@@ -65,7 +69,7 @@ export default function Auth() {
       <label>Phone number<PhoneInput international defaultCountry="IN" value={phone} onChange={value => setPhone(value || '')} required /></label>
       <label>Password<input required type="password" minLength="8" value={password} onChange={e => setPassword(e.target.value)} autoComplete={isLogin ? 'current-password' : 'new-password'} /></label>
       {error && <p role="alert">{error}</p>}
-      <PrimaryButton disabled={busy}>{busy ? 'Please wait…' : isLogin ? 'Sign in' : 'Create account'}</PrimaryButton>
+      <PrimaryButton type="submit" disabled={busy}>{busy ? 'Please wait…' : isLogin ? 'Sign in' : 'Create account'}</PrimaryButton>
     </form></GlassCard>
     <button type="button" onClick={() => { setError(''); setIsLogin(!isLogin); }} style={{ marginTop: 16 }}>
       {isLogin ? 'Create a donor account' : 'I already have an account'}
