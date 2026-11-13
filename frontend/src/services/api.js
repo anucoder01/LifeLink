@@ -2,7 +2,9 @@ import axios from 'axios';
 
 // Default config for the axios instance
 export const api = axios.create({
-  baseURL: 'http://localhost:8080/api/v1',
+  // Use Vite's same-origin proxy locally. Set VITE_API_BASE_URL when the API
+  // is hosted separately (for example, https://api.example.com/api/v1).
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
